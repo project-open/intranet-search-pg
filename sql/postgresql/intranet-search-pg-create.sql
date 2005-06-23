@@ -283,6 +283,13 @@ EXECUTE PROCEDURE im_forum_topics_tsearch();
 
 
 
+-----------------------------------------------------------
+-- Business Object View URLs
+
+-- remove potential old entries
+delete from im_biz_object_urls
+where object_type = 'im_forum_topic';
+
 insert into im_biz_object_urls (object_type, url_type, url) values (
 'im_forum_topic','view','/intranet-forum/view?topic_id=');
 insert into im_biz_object_urls (object_type, url_type, url) values (

@@ -7,6 +7,7 @@
 --
 -- @author pepels@gmail.com
 -- @author frank.bergmann@project-open.com
+-- @author toni.vila@project-open.com
 
 select im_menu__del_module('intranet-search-pg');
 select im_component_plugin__del_module('intranet-search-pg');
@@ -27,3 +28,9 @@ drop table im_search_object_types;
 
 delete from im_biz_object_urls
 where object_type = 'im_forum_topic';
+
+-- Now use a modified drop script to get tsearch2
+-- out of the database again.
+
+\i untsearch2.sql
+

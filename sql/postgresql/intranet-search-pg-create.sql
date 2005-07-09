@@ -13,7 +13,7 @@
 -- In these cases please source the file manually and
 -- remove the line from this file for a local install.
 
--- \i /usr/share/postgresql/contrib/tsearch2.sql
+\i /usr/share/postgresql/contrib/tsearch2.sql
 
 
 -- "Abbreviation" of object_type for search purposes -

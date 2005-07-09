@@ -153,10 +153,6 @@ begin
 	select translate(v_str, ''\350\351\352\353'', ''eeee'')
 	into v_str;
 
-	-- Problems with LATIN SMALL LETTER E WITH ACUTE: Try Unicode
-	select translate(v_str, ''z'', ''\u00E9'')
-	into v_str;
-
 	-- 354	236	EC	?	LATIN SMALL LETTER I WITH GRAVE
 	-- 355	237	ED	?	LATIN SMALL LETTER I WITH ACUTE
 	-- 356	238	EE	?	LATIN SMALL LETTER I WITH CIRCUMFLEX

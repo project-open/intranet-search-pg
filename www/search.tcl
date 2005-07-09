@@ -69,14 +69,45 @@ if {[lsearch im_document $type] >= 0} {
     return
 }
 
-
 set q [string tolower $q]
 if {$q == "search"} {
     set q "test"
 }
+
+# Remove accents and other special characters from
+# search query. Also remove "@", "-" and "." and 
+# convert them to spaces
+set q [db_exec_plsql normalize "select norm_text(:q)"]
+
 set query $q
 set nquery [llength $q]
 
+
+# -------------------------------------------------
+# Check if it's a simple query...
+# -------------------------------------------------
+
+set simple_query 1
+if {$nquery > 1} {
+
+    # Check that all keywords are alphanumeric
+    foreach keyword $query {
+
+	if {![regexp {^[a-zA-Z]*$} $keyword]} {
+	    set simple_query 0
+	}
+    }
+
+}
+
+# insert "&" between elements of a simple query
+if {$simple_query && $nquery > 1} {
+    set q [join $query " & "]
+}
+
+# -------------------------------------------------
+# 
+# -------------------------------------------------
 
 if {$nquery > 1} {
     

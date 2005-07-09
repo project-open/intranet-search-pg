@@ -326,10 +326,11 @@ declare
         p_str           alias for $1;
         v_str           varchar;
 begin
-        select replace(p_str, ''@.'', ''  '')
+        select translate(p_str, ''@.-'', ''   '')
         into v_str;
 	
-        return norm_text_latin(norm_text_utf8(v_str));
+        return norm_text_utf8(v_str);
+--        return norm_text_latin(norm_text_utf8(v_str));
 end;' language 'plpgsql';
 
 

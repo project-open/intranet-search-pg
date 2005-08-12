@@ -16,6 +16,7 @@ drop trigger im_forum_topics_tsearch_tr on im_forum_topics;
 drop trigger im_projects_tsearch_tr on im_projects;
 drop trigger im_companies_tsearch_tr on im_companies;
 drop trigger persons_tsearch_tr on persons;
+drop trigger users_tsearch_tr on users;
 
 
 drop function im_forum_topics_tsearch ();

@@ -254,6 +254,22 @@ if {[im_permission $user_id "view_users_all"]} {
 # just leave the permission check for later...
 set user_perm_sql ""
 
+# Don't show deleted users (by default...)
+set deleted_users_sql ""
+set deleted_users_sql "
+	and p.person_id not in (
+		select	m.member_id
+		from	group_member_map m, 
+			membership_rels mr
+		where  	m.group_id = acs__magic_object_id('registered_users') 
+		  	AND m.rel_id = mr.rel_id 
+		  	AND m.container_id = m.group_id 
+		  	AND m.rel_type::text = 'membership_rel'
+			AND mr.member_state = 'banned'
+	)
+"
+
+
 # -----------------------------------------------------------
 # Build a suitable select for object types
 # -----------------------------------------------------------
@@ -306,6 +322,7 @@ set sql "
 			select	person_id as object_id
 			from	persons p
 			where	1=1
+				$deleted_users_sql
 				$user_perm_sql
 		) readable_biz_objs
 	where

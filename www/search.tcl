@@ -39,9 +39,11 @@ ad_page_contract {
     {offset:integer 0}
     {results_per_page:integer 20}
     {type:multiple "all"}
+    {include_deleted_p 0}
 } -errors {
     q:notnull {[_ search.lt_You_must_specify_some].}
 }
+
 
 # -----------------------------------------------------------
 # Default & Security
@@ -255,7 +257,6 @@ if {[im_permission $user_id "view_users_all"]} {
 set user_perm_sql ""
 
 # Don't show deleted users (by default...)
-set deleted_users_sql ""
 set deleted_users_sql "
 	and p.person_id not in (
 		select	m.member_id
@@ -268,6 +269,9 @@ set deleted_users_sql "
 			AND mr.member_state = 'banned'
 	)
 "
+if {1 == $include_deleted_p} {
+    set deleted_users_sql ""
+}
 
 
 # -----------------------------------------------------------

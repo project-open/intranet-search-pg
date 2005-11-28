@@ -1,4 +1,4 @@
-# /packages/intranet-forum/tcl/intranet-forum.tcl
+# /packages/intranet-search-pg/tcl/intranet-search-pg-procs.tcl
 #
 # Copyright (C) 1998-2004 various parties
 # The code is based on ArsDigita ACS 3.4

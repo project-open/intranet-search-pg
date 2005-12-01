@@ -132,7 +132,7 @@ if {$nquery > 1} {
 	db_string test_query "select to_tsquery('default',:q)"
     } errmsg]} {
 	ad_return_complaint 1 "<H2>Bad Query</h2>
-        The <span class=brandfirst>Project/</span><span class=brandsec>Open</span>
+        The <span class=brandsec>&\#93;</span><span class=brandfirst>project-open</span><span class=brandsec>&\#91;</span>
         search engine is capable of processing complex queries with more then
         one word. <br>
         However, you need to instruct the search engine how to search:

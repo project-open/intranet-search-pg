@@ -78,7 +78,7 @@ if { $results_per_page <= 0} {
     set results_per_page $results_per_page
 }
 
-set limit [expr 10 * $results_per_page]
+set limit [expr 1 * $results_per_page]
 
 if {[lsearch im_document $type] >= 0} {
     ad_return_complaint 1 "<h3>Not implemented yet</h3>
@@ -87,9 +87,6 @@ if {[lsearch im_document $type] >= 0} {
 }
 
 set q [string tolower $q]
-if {$q == "search"} {
-    set q "test"
-}
 
 # Remove accents and other special characters from
 # search query. Also remove "@", "-" and "." and 
@@ -110,7 +107,7 @@ if {$nquery > 1} {
     # Check that all keywords are alphanumeric
     foreach keyword $query {
 
-	if {![regexp {^[a-zA-Z]*$} $keyword]} {
+	if {![regexp {^[a-zA-Z0-9]*$} $keyword]} {
 	    set simple_query 0
 	}
     }

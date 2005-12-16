@@ -72,6 +72,14 @@ set package_url_with_extras $package_url
 set context [list]
 set context_base_url $package_url
 
+# Determine the user's group memberships
+set user_is_employee_p [im_user_is_employee_p $user_id]
+set user_is_customer_p [im_user_is_customer_p $user_id]
+set user_is_wheel_p [ad_user_group_member [im_wheel_group_id] $user_id]
+set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $user_id]
+set user_is_admin_p [expr $user_is_admin_p || $user_is_wheel_p]
+
+
 if { $results_per_page <= 0} {
     set results_per_page [ad_parameter -package_id $package_id SearchResultsPerPage]
 } else {
@@ -286,6 +294,10 @@ if {1 == $include_deleted_p} {
 }
 
 
+set forum_perm_sql ""
+
+
+
 # -----------------------------------------------------------
 # Build a suitable select for object types
 # -----------------------------------------------------------
@@ -304,6 +316,7 @@ if {[string equal "all" $type]} {
 set sql "
 	select
 		acs_object__name(so.object_id) as name,
+		acs_object__name(so.biz_object_id) as biz_object_name,
 		rank(so.fti, :q::tsquery) as rank,
 		fti as full_text_index,
 		bou.url,
@@ -311,7 +324,8 @@ set sql "
 		sot.object_type,
 		aot.pretty_name as object_type_pretty_name,
 		so.biz_object_id,
-		so.popularity
+		so.popularity,
+		readable_biz_objs.object_type as biz_object_type
 	from
 		im_search_objects so,
 		acs_object_types aot,
@@ -325,17 +339,20 @@ set sql "
 			where	url_type = 'view'
 		) bou on (sot.object_type = bou.object_type),
 		(
-			select	project_id as object_id
+			select	project_id as object_id,
+				'im_project' as object_type
 			from	im_projects p
 			where	1=1
 				$project_perm_sql
 		    UNION
-			select	company_id as object_id
+			select	company_id as object_id,
+				'im_company' as object_type
 			from	im_companies c
 			where	1=1
 				$company_perm_sql
 		    UNION
-			select	person_id as object_id
+			select	person_id as object_id,
+				'user' as object_type
 			from	persons p
 			where	1=1
 				$deleted_users_sql
@@ -353,7 +370,6 @@ set sql "
 "
 
 set high 0
-
 set count 0
 set result_html ""
 
@@ -389,8 +405,54 @@ db_foreach full_text_query $sql {
 	    if {!$read} { continue }
 	}
 	im_forum_topic { 
-	    # Nothing. The topic is readable if it's business
-	    # object is readable, and that's already checked anyway.
+	    # The topic is readable if it's business object is readable
+	    # AND if the user belongs to the right "sphere"
+
+	    # Very ugly: The biz_object_id is not checked for "user"
+	    # because it is very slow... So check it here now.
+	    if {"user" == $biz_object_type} {
+	        im_user_permissions $user_id $biz_object_id view read write admin
+	        if {!$read} { continue }
+	    }
+
+	    # Determine if the current user belongs to the admins of
+	    # the "business object". This is necessary, because there
+	    # is the forum permission "PM Only" which gives rights only"
+	    # to the (project) managers of the of the container biz object
+	    set object_admin_sql "
+		                ( select count(*) 
+				  from	acs_rels r,
+					im_biz_object_members m
+				  where	r.object_id_two = :user_id
+					and r.object_id_one = :biz_object_id
+					and r.rel_id = m.rel_id
+					and m.object_role_id in (1301, 1302, 1303)
+				)::integer\n"
+	    if {$user_is_admin_p} { set object_admin_sql "1::integer\n" }
+
+	    # Determine the permissions for the forum item
+	    db_0or1row forum_perm "
+		select
+			t.subject,
+			im_forum_permission(
+		                :user_id::integer,
+		                t.owner_id,
+		                t.asignee_id,
+		                t.object_id,
+		                t.scope,
+		                1::integer,
+				$object_admin_sql ,
+		                :user_is_employee_p::integer,
+		                :user_is_customer_p::integer
+		        ) as forum_permission_p
+		from
+			im_forum_topics t
+		where
+			t.topic_id = :object_id
+            "
+	    if {!$forum_permission_p} { continue }
+	    set name_link "<a href=\"$url$object_id\">$biz_object_name: $subject</a>\n"
+
 	}
     }
 

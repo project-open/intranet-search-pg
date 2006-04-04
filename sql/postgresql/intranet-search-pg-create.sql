@@ -31,6 +31,15 @@ create table im_search_object_types (
 );
 
 
+-- 0 | im_project
+-- 1 | user
+-- 2 | im_forum_topic
+-- 3 | im_company
+-- 4 | im_invoice
+
+
+
+
 -- The main search table with Full Text Index.
 --
 create table im_search_objects (

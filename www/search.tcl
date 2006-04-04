@@ -65,6 +65,7 @@ ad_page_contract {
 # -----------------------------------------------------------
 
 set user_id [ad_maybe_redirect_for_registration]
+set current_user_id $user_id
 set page_title "Search Results for \"$q\""
 set package_id [ad_conn package_id]
 set package_url [ad_conn package_url]
@@ -215,6 +216,7 @@ db_foreach object_type $sql {
 # Permissions for different types of business objects
 # -----------------------------------------------------------
 
+# --------------------- Project -----------------------------------
 set project_perm_sql "
 			and p.project_id in (
 			        select
@@ -224,13 +226,14 @@ set project_perm_sql "
 			                acs_rels r
 			        where
 			                r.object_id_one = p.project_id
-			                and r.object_id_two = :user_id
+			                and r.object_id_two = :current_user_id
 			)"
 
 if {[im_permission $user_id "view_projects_all"]} {
         set project_perm_sql ""
 }
 
+# --------------------- Companies ----------------------------------
 set company_perm_sql "
 			and c.company_id in (
 			        select
@@ -240,7 +243,7 @@ set company_perm_sql "
 			                acs_rels r
 			        where
 			                r.object_id_one = c.company_id
-			                and r.object_id_two = :user_id
+			                and r.object_id_two = :current_user_id
 			)"
 
 if {[im_permission $user_id "view_companies_all"]} {
@@ -248,28 +251,102 @@ if {[im_permission $user_id "view_companies_all"]} {
 }
 
 
+# --------------------- Invoices -----------------------------------
+# Let a user see the invoice if he can read/admin either the 
+# customer or the provider of the invoice
+# Include the join with "im_invoices", because it is actually
+# very selective (few cost items are financial documents)
+
+
+set customer_sql "
+	select distinct
+		c.company_id
+	from
+		im_companies c,
+		acs_rels r
+	where
+		c.company_type_id in (
+			select child_id
+			from im_category_hierarchy
+			where parent_id = [im_company_type_customer]
+		    UNION
+			select [im_company_type_customer] as child_id
+		)
+		and r.object_id_one = c.company_id
+		and r.object_id_two = :current_user_id
+		and c.company_path != 'internal'
+"
+if {![im_user_is_customer_p $user_id]} { set customer_sql "select 0 as company_id" }
+
+
+set provider_sql "
+	select distinct
+		c.company_id
+	from
+		im_companies c,
+		acs_rels r
+	where
+		c.company_type_id in (
+			select child_id
+			from im_category_hierarchy
+			where parent_id = [im_company_type_provider]
+		    UNION
+			select [im_company_type_provider] as child_id
+		)
+		and r.object_id_one = c.company_id
+		and r.object_id_two = :current_user_id
+		and c.company_path != 'internal'
+"
+if {![im_user_is_freelance_p $user_id]} { set provider_sql "select 0 as company_id" }
+
+
+set invoice_perm_sql "
+			and i.invoice_id in (
+				select
+					i.invoice_id
+				from
+					im_invoices i,
+					im_costs c
+				where
+					i.invoice_id = c.cost_id
+					and (
+					    c.customer_id in ($customer_sql)
+					OR
+					    c.provider_id in ($provider_sql)
+					)
+			)"
+
+if {[im_permission $user_id "view_invoices"]} {
+	set invoice_perm_sql ""
+}
+
+# ad_return_complaint 1 $invoice_perm_sql
+
+
+
+# --------------------- Users -----------------------------------
 # The list of prohibited users: They belong 
 # to a group which the current user should not see
 set user_perm_sql "
 			and person_id not in (
 select distinct
-        cc.user_id
+	cc.user_id
 from
-        cc_users cc,
-        (
-                select  group_id
-                from    groups
-                where   group_id > 0
-                        and 'f' = im_object_permission_p(group_id,8849,'read')
-        ) forbidden_groups,
-        group_approved_member_map gamm
+	cc_users cc,
+	(
+		select  group_id
+		from    groups
+		where   group_id > 0
+			and 'f' = im_object_permission_p(group_id,8849,'read')
+	) forbidden_groups,
+	group_approved_member_map gamm
 where
-        cc.user_id = gamm.member_id
-        and gamm.group_id = forbidden_groups.group_id
+	cc.user_id = gamm.member_id
+	and gamm.group_id = forbidden_groups.group_id
 			)"
 
 if {[im_permission $user_id "view_users_all"]} {
-        set user_perm_sql ""
+	set user_perm_sql ""
 }
 
 # user_perm_sql is very slow (~20 seconds), so
@@ -351,6 +428,12 @@ set sql "
 			where	1=1
 				$company_perm_sql
 		    UNION
+			select	invoice_id as object_id,
+				'im_invoice' as object_type
+			from	im_invoices i
+			where	1=1
+				$invoice_perm_sql
+		    UNION
 			select	person_id as object_id,
 				'user' as object_type
 			from	persons p
@@ -411,8 +494,8 @@ db_foreach full_text_query $sql {
 	    # Very ugly: The biz_object_id is not checked for "user"
 	    # because it is very slow... So check it here now.
 	    if {"user" == $biz_object_type} {
-	        im_user_permissions $user_id $biz_object_id view read write admin
-	        if {!$read} { continue }
+		im_user_permissions $user_id $biz_object_id view read write admin
+		if {!$read} { continue }
 	    }
 
 	    # Determine if the current user belongs to the admins of
@@ -420,10 +503,10 @@ db_foreach full_text_query $sql {
 	    # is the forum permission "PM Only" which gives rights only"
 	    # to the (project) managers of the of the container biz object
 	    set object_admin_sql "
-		                ( select count(*) 
+				( select count(*) 
 				  from	acs_rels r,
 					im_biz_object_members m
-				  where	r.object_id_two = :user_id
+				  where	r.object_id_two = :current_user_id
 					and r.object_id_one = :biz_object_id
 					and r.rel_id = m.rel_id
 					and m.object_role_id in (1301, 1302, 1303)
@@ -435,21 +518,21 @@ db_foreach full_text_query $sql {
 		select
 			t.subject,
 			im_forum_permission(
-		                :user_id::integer,
-		                t.owner_id,
-		                t.asignee_id,
-		                t.object_id,
-		                t.scope,
-		                1::integer,
+				:current_user_id::integer,
+				t.owner_id,
+				t.asignee_id,
+				t.object_id,
+				t.scope,
+				1::integer,
 				$object_admin_sql ,
-		                :user_is_employee_p::integer,
-		                :user_is_customer_p::integer
-		        ) as forum_permission_p
+				:user_is_employee_p::integer,
+				:user_is_customer_p::integer
+			) as forum_permission_p
 		from
 			im_forum_topics t
 		where
 			t.topic_id = :object_id
-            "
+	    "
 	    if {!$forum_permission_p} { continue }
 	    set name_link "<a href=\"$url$object_id\">$biz_object_name: $subject</a>\n"
 
@@ -460,7 +543,7 @@ db_foreach full_text_query $sql {
       <tr>
 	<td>
 	  <font size=\"+1\">$object_type_pretty_name: $name_link</font><br>
-          $headline
+	  $headline
 	  <br>&nbsp;
 	</td>
       </tr>

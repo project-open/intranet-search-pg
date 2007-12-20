@@ -318,20 +318,20 @@ if {[im_permission $user_id "view_invoices"]} {
 # to a group which the current user should not see
 set user_perm_sql "
 			and person_id not in (
-select distinct
-	cc.user_id
-from
-	cc_users cc,
-	(
-		select  group_id
-		from    groups
-		where   group_id > 0
-			and 'f' = im_object_permission_p(group_id,8849,'read')
-	) forbidden_groups,
-	group_approved_member_map gamm
-where
-	cc.user_id = gamm.member_id
-	and gamm.group_id = forbidden_groups.group_id
+				select distinct
+					cc.user_id
+					from
+					cc_users cc,
+					(
+						select  group_id
+						from    groups
+						where   group_id > 0
+							and 'f' = im_object_permission_p(group_id,8849,'read')
+					) forbidden_groups,
+					group_approved_member_map gamm
+				where
+					cc.user_id = gamm.member_id
+					and gamm.group_id = forbidden_groups.group_id
 			)"
 
 if {[im_permission $user_id "view_users_all"]} {
@@ -352,7 +352,7 @@ set deleted_users_sql "
 		  	AND m.rel_id = mr.rel_id 
 		  	AND m.container_id = m.group_id 
 		  	AND m.rel_type::text = 'membership_rel'
-			AND mr.member_state = 'banned'
+			AND mr.member_state != 'approved'
 	)
 "
 if {1 == $include_deleted_p} {

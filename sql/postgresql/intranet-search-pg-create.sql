@@ -792,26 +792,28 @@ drop function inline_0 ();
 -- fraber 110327: PG 8.3 and 8.4 configuration
 -- These versions have a new table "pg_ts_config"
 --
-create or replace function inline_0 ()
-returns integer as '
-declare
-	v_count		integer;
-begin
-	-- Check if the table exists
-	select	count(*) into v_count from user_tab_columns
-	where	lower(table_name) = ''pg_ts_config'';
-	if v_count = 0 then return 1; end if;
-
-	-- Check if the entry already exists
-	select	count(*) into v_count from pg_ts_config
-	where	lower(cfgname) = ''default'';
-	if v_count > 0 then return 2; end if;
-
-	CREATE TEXT SEARCH CONFIGURATION public.default (COPY = pg_catalog.english);
-
-	return 0;
-end;' language 'plpgsql';
-select inline_0 ();
-drop function inline_0 ();
+-- fraber 110503: Produces a syntax error on PG 8.1
+--
+--create or replace function inline_0 ()
+--returns integer as '
+--declare
+--	v_count		integer;
+--begin
+--	-- Check if the table exists
+--	select	count(*) into v_count from user_tab_columns
+--	where	lower(table_name) = ''pg_ts_config'';
+--	if v_count = 0 then return 1; end if;
+--
+--	-- Check if the entry already exists
+--	select	count(*) into v_count from pg_ts_config
+--	where	lower(cfgname) = ''default'';
+--	if v_count > 0 then return 2; end if;
+--
+--	CREATE TEXT SEARCH CONFIGURATION public.default (COPY = pg_catalog.english);
+--
+--	return 0;
+--end;' language 'plpgsql';
+--select inline_0 ();
+--drop function inline_0 ();
 
 

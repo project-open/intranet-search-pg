@@ -38,17 +38,16 @@ create table im_search_object_types (
 
 
 -- 0 | im_project	| 1
--- 1 | user	| 5
--- 2 | im_forum_topic | 0.5
+-- 1 | user		| 5
+-- 2 | im_forum_topic	| 0.5
 -- 3 | im_company	| 10
 -- 4 | im_invoice	| 1
--- 5 | emails (in CR) | 0.2
+-- 5 | emails (in CR)	| 0.2
 -- 6 | im_fs_files	| 0.1
 -- 7 | content_item	| 0.5
 -- 8 | im_ticket	| 0.7
 -- 9 | im_conf_item	| 0.8
-
-
+--10 | im_event		| 0.6
 
 
 
@@ -819,8 +818,8 @@ begin
 		coalesce(c.win_product_key, '''') || '' '' ||
 		coalesce(c.win_userdomain, '''') || '' '' ||
 		coalesce(c.win_workgroup, '''')
-	into    v_string
-	from    im_conf_items c
+	into	v_string
+	from	im_conf_items c
 	where   c.conf_item_id = new.conf_item_id;
 
 	perform im_search_update(new.conf_item_id, ''im_conf_item'', new.conf_item_id, v_string);

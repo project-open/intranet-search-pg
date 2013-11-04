@@ -22,14 +22,18 @@
 	<tr valign=top>
 	  <td align=center>
 		<table cellspacing=0 cellpadding=0>
+		<tr class=rowtitle>
+		<td class=rowtitle><input type="checkbox" name="_dummy" onclick="acs_ListCheckAll('type',this.checked)" checked></td>
+		<td class=rowtitle><%= [lang::message::lookup "" intranet-search-pg.Search_Object_Type "Search Object Type"] %>
+		</tr>
 		@objects_html;noquote@
 		</table>
 	  </td>
 	  <td>
 		<table cellspacing=0 cellpadding=0>
-		<tr>
-		  <td><input type=checkbox name='include_deleted_p' value="1"></td>
-		  <td>#intranet-search-pg.Include_Deleted#</td>
+		<tr class=rowtitle>
+		  <td class=rowtitle><input type=checkbox name='include_deleted_p' value="1"></td>
+		  <td class=rowtitle>#intranet-search-pg.Include_Deleted#</td>
 		</tr>
 		</table>
 	  </td>

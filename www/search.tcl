@@ -61,8 +61,7 @@ ad_page_contract {
 # Default & Security
 # -----------------------------------------------------------
 
-set user_id [ad_maybe_redirect_for_registration]
-set current_user_id $user_id
+set current_user_id [ad_maybe_redirect_for_registration]
 set page_title [lang::message::lookup "" intranet-search-pg.Search_Results_for_query "Search Results for '%q%'"]
 set package_id [ad_conn package_id]
 set package_url [ad_conn package_url]
@@ -71,10 +70,10 @@ set context [list]
 set context_base_url $package_url
 
 # Determine the user's group memberships
-set user_is_employee_p [im_user_is_employee_p $user_id]
-set user_is_customer_p [im_user_is_customer_p $user_id]
-set user_is_wheel_p [im_profile::member_p -profile_id [im_wheel_group_id] -user_id $user_id]
-set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $user_id]
+set user_is_employee_p [im_user_is_employee_p $current_user_id]
+set user_is_customer_p [im_user_is_customer_p $current_user_id]
+set user_is_wheel_p [im_profile::member_p -profile_id [im_wheel_group_id] -user_id $current_user_id]
+set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $current_user_id]
 set user_is_admin_p [expr $user_is_admin_p || $user_is_wheel_p]
 
 
@@ -233,7 +232,7 @@ db_foreach object_type $sql {
     append objects_html "
 	<tr>
 	  <td>
-	    <input type=checkbox name=type value='$object_type' $checked>
+	    <input type=checkbox name=type value='$object_type' id='type,$object_type' $checked>
 	  </td>
 	  <td>
 	    $object_type_pretty_name
@@ -260,7 +259,7 @@ set project_perm_sql "
 			                and r.object_id_two = :current_user_id
 			)"
 
-if {[im_permission $user_id "view_projects_all"]} {
+if {[im_permission $current_user_id "view_projects_all"]} {
         set project_perm_sql ""
 }
 
@@ -276,7 +275,7 @@ set company_perm_sql "
 					and c.company_status_id not in ([im_company_status_deleted])
 			)"
 
-if {[im_permission $user_id "view_companies_all"]} {
+if {[im_permission $current_user_id "view_companies_all"]} {
         set company_perm_sql "
 			and c.company_status_id not in ([im_company_status_deleted])
 	"
@@ -295,11 +294,31 @@ set conf_item_perm_sql "
 					and c.conf_item_status_id not in (11702)
 			)"
 
-if {[im_permission $user_id "view_conf_items_all"]} {
+if {[im_permission $current_user_id "view_conf_items_all"]} {
         set conf_item_perm_sql "
 			and c.conf_item_status_id not in ([im_conf_item_status_deleted])
 	"
 }
+
+
+# --------------------- Events ----------------------------------
+set event_perm_sql "
+			and e.event_id in (
+			        select	c.event_id
+			        from	im_events c,
+			                acs_rels r
+			        where	r.object_id_one = c.event_id
+			                and r.object_id_two = :current_user_id
+					and c.event_status_id not in ([im_event_status_deleted])
+			)"
+
+if {[im_permission $current_user_id "view_events_all"]} {
+        set event_perm_sql "
+			and e.event_status_id not in ([im_event_status_deleted])
+	"
+}
+
+
 
 
 # --------------------- Financial Documents -----------------------------------
@@ -320,7 +339,7 @@ set customer_sql "
 		and r.object_id_two = :current_user_id
 		and c.company_path != 'internal'
 "
-if {![im_user_is_customer_p $user_id]} { set customer_sql "select 0 as company_id" }
+if {![im_user_is_customer_p $current_user_id]} { set customer_sql "select 0 as company_id" }
 
 
 set provider_sql "
@@ -335,7 +354,7 @@ set provider_sql "
 		and r.object_id_two = :current_user_id
 		and c.company_path != 'internal'
 "
-if {![im_user_is_freelance_p $user_id]} { set provider_sql "select 0 as company_id" }
+if {![im_user_is_freelance_p $current_user_id]} { set provider_sql "select 0 as company_id" }
 
 
 set invoice_perm_sql "
@@ -351,7 +370,7 @@ set invoice_perm_sql "
 					)
 			)"
 
-if {[im_permission $user_id "view_invoices"]} {
+if {[im_permission $current_user_id "view_invoices"]} {
 	set invoice_perm_sql ""
 }
 
@@ -377,7 +396,7 @@ where
 	and gamm.group_id = forbidden_groups.group_id
 			)"
 
-if {[im_permission $user_id "view_users_all"]} {
+if {[im_permission $current_user_id "view_users_all"]} {
 	set user_perm_sql ""
 }
 
@@ -416,7 +435,7 @@ set file_perm_sql "
 			                and r.object_id_two = :current_user_id
 			)"
 
-if {[im_permission $user_id "view_projects_all"]} {
+if {[im_permission $current_user_id "view_projects_all"]} {
         set file_perm_sql ""
 }
 
@@ -465,6 +484,18 @@ if {[im_table_exists im_conf_items]} {
 			from	im_conf_items c
 			where	1=1
 				$conf_item_perm_sql
+    "
+}
+
+set event_union ""
+if {[im_table_exists im_events]} {
+    set event_union "
+		    UNION
+			select	event_id as object_id,
+				'im_event' as object_type
+			from	im_events e
+			where	1=1
+				$event_perm_sql
     "
 }
 
@@ -519,6 +550,7 @@ set sql "
                         from    cr_items c
                         where   1=1
 		    $conf_item_union
+		    $event_union
 		) readable_biz_objs,
 		acs_objects o
 		LEFT OUTER JOIN (
@@ -568,11 +600,11 @@ db_foreach full_text_query $sql {
     # even if it's kind of slow to do this iteratively...
     switch $object_type {
 	im_project { 
-	    im_project_permissions $user_id $object_id view read write admin
+	    im_project_permissions $current_user_id $object_id view read write admin
 	    if {!$read} { continue }
 	}
 	user { 
-	    im_user_permissions $user_id $object_id view read write admin
+	    im_user_permissions $current_user_id $object_id view read write admin
 	    if {!$read} { continue }
 	}
 	im_fs_file { 
@@ -582,7 +614,7 @@ db_foreach full_text_query $sql {
 	    # Very ugly: The biz_object_id is not checked for "user"
 	    # because it is very slow... So check it here now.
 	    if {"user" == $biz_object_type} {
-		im_user_permissions $user_id $biz_object_id view read write admin
+		im_user_permissions $current_user_id $biz_object_id view read write admin
 		if {!$read} { continue }
 	    }
 
@@ -608,7 +640,7 @@ db_foreach full_text_query $sql {
 	    # Very ugly: The biz_object_id is not checked for "user"
 	    # because it is very slow... So check it here now.
 	    if {"user" == $biz_object_type} {
-		im_user_permissions $user_id $biz_object_id view read write admin
+		im_user_permissions $current_user_id $biz_object_id view read write admin
 		if {!$read} { continue }
 	    }
 
@@ -672,7 +704,7 @@ db_foreach full_text_query $sql {
 		    # Wiki
 		    set read_p [permission::permission_p \
 				    -object_id $object_id \
-				    -party_id $user_id \
+				    -party_id $current_user_id \
 				    -privilege "read" ]
 
 		    if {!$read_p} { continue }

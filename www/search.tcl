@@ -309,7 +309,7 @@ set event_perm_sql "
 			                acs_rels r
 			        where	r.object_id_one = c.event_id
 			                and r.object_id_two = :current_user_id
-					and c.event_status_id not in ([im_event_status_deleted])
+					and c.event_status_id not in (82099) -- 82099=im_event_status_deleted
 			)"
 
 if {[im_permission $current_user_id "view_events_all"]} {

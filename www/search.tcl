@@ -104,13 +104,8 @@ regsub -all {["']} $q {} q
 # search query. Also remove "@", "-" and "." and 
 # convert them to spaces
 set q [db_exec_plsql normalize "select norm_text(:q)"]
-
 set query $q
-regsub -all {\&} $query { & } query
-regsub -all {\|} $query { \| } query
-regsub -all {    } $query { } query
-regsub -all {  } $query { } query
-set q $query
+set q [join $q " & "]
 
 # Determine if there are several parts to the query
 set nquery [llength $q]

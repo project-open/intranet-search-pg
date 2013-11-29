@@ -220,9 +220,13 @@ db_foreach object_type $sql {
     if {[string equal $type "all"] || [lsearch $type $object_type] >= 0} {
 	set checked " checked"
     }
-
     regsub -all { } $object_type_pretty_name {_} object_type_pretty_name_sub
-    set object_type_pretty_name [lang::message::lookup "" intranet-core.$object_type_pretty_name_sub $object_type_pretty_name]
+
+    if { "im_invoice"==$object_type } {
+	set object_type_pretty_name  [lang::message::lookup "" intranet-cost.FinancialDocument "Financial Document"]
+    } else {
+	set object_type_pretty_name [lang::message::lookup "" intranet-core.$object_type_pretty_name_sub $object_type_pretty_name]
+    }
 
     append objects_html "
 	<tr>
@@ -475,7 +479,8 @@ if {[im_table_exists im_conf_items]} {
     set conf_item_union "
 		    UNION
 			select	conf_item_id as object_id,
-				'im_conf_item' as object_type
+				'im_conf_item' as object_type,
+                                0 as object_sub_type_id
 			from	im_conf_items c
 			where	1=1
 				$conf_item_perm_sql
@@ -487,7 +492,8 @@ if {[im_table_exists im_events]} {
     set event_union "
 		    UNION
 			select	event_id as object_id,
-				'im_event' as object_type
+				'im_event' as object_type,
+                                0 as object_sub_type_id
 			from	im_events e
 			where	1=1
 				$event_perm_sql
@@ -506,7 +512,8 @@ set sql "
 		aot.pretty_name as object_type_pretty_name,
 		so.biz_object_id,
 		so.popularity,
-		readable_biz_objs.object_type as biz_object_type
+		readable_biz_objs.object_type as biz_object_type,
+                readable_biz_objs.object_sub_type_id as object_sub_type_id
 	from
 		im_search_objects so,
 		acs_object_types aot,
@@ -516,32 +523,38 @@ set sql "
 		) sot,
 		(
 			select	project_id as object_id,
-				'im_project' as object_type
+				'im_project' as object_type,
+				0 as object_sub_type_id
 			from	im_projects p
 			where	1=1
 				$project_perm_sql
 		    UNION
 			select	company_id as object_id,
-				'im_company' as object_type
+				'im_company' as object_type,
+                                0 as object_sub_type_id
 			from	im_companies c
 			where	1=1
 				$company_perm_sql
 		    UNION
 			select	invoice_id as object_id,
-				'im_invoice' as object_type
-			from	im_invoices i
-			where	1=1
+				'im_invoice' as object_type,
+                                c.cost_type_id as object_sub_type_id
+			from	im_invoices i,
+				im_costs c
+			where	i.invoice_id = c.cost_id
 				$invoice_perm_sql
 		    UNION
 			select	person_id as object_id,
-				'user' as object_type
+				'user' as object_type,
+                                0 as object_sub_type_id
 			from	persons p
 			where	1=1
 				$deleted_users_sql
 				$user_perm_sql
                     UNION
                         select  item_id as object_id,
-                                'content_item' as object_type
+                                'content_item' as object_type,
+                                0 as object_sub_type_id
                         from    cr_items c
                         where   1=1
 		    $conf_item_union
@@ -768,6 +781,18 @@ db_foreach full_text_query $sql {
 		</td>
 	      </tr>
 	    "
+	}
+        im_invoice {
+	    set l10n_key "intranet-cost.[im_cost_type_short_name $object_sub_type_id]"
+            append result_html "
+              <tr>
+                <td>
+                  <font>[lang::message::lookup "" intranet-cost.FinancialDocument "Financial Document"] ([lang::message::lookup "" $l10n_key "[im_cost_type_short_name $object_sub_type_id]"]): $name_link</font><br>
+                  $headline
+                  <br>&nbsp;
+                </td>
+              </tr>
+            "
 	}
 	default {
 	    append result_html "

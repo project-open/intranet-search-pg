@@ -105,7 +105,7 @@ regsub -all {["']} $q {} q
 # convert them to spaces
 set q [db_exec_plsql normalize "select norm_text(:q)"]
 set query $q
-set q [join $q " & "]
+#set q [join $q " & "]
 
 # Determine if there are several parts to the query
 set nquery [llength $q]

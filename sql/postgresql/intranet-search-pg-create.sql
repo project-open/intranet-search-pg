@@ -407,6 +407,43 @@ end;' language 'plpgsql';
 
 
 -----------------------------------------------------------
+-- Trigram conversion
+
+create or replace function im_tsvector_to_trigram (tsvector)
+returns integer[] as $body$
+declare
+        p_tsquery		alias for $1;
+
+        v_text                  varchar;
+        v_exists_p              integer;
+        i                       integer;
+        v_trigram_string        varchar;
+        v_trigram_hash          bigint;
+        v_array                 integer[];
+begin
+        select  trim(regexp_replace(strip(p_tsquery)::text, '[^a-z ]', '', 'g')) into v_text;
+        select  regexp_replace(v_text, ' ', '_', 'g') into v_text;
+        v_array := '{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}';
+	IF v_text is null THEN return v_array; END IF;
+
+        FOR i IN 1 .. length(v_text) -2 LOOP
+            v_trigram_string := substring(v_text from i for 3);
+            v_trigram_hash := (
+                        (ascii(substring(v_text from i for 1)) - 94) * 1681 +
+                        (ascii(substring(v_text from i+1 for 1)) - 94) * 41 +
+                        (ascii(substring(v_text from i+2 for 1)) - 94) * 1
+            ) % 17 + 1;
+            v_array[v_trigram_hash] := v_array[v_trigram_hash] + 1;
+        END LOOP;
+
+	return v_array;
+end;$body$ language 'plpgsql';
+
+
+
+
+
+-----------------------------------------------------------
 -- im_project
 
 insert into im_search_object_types values (0,'im_project',1);

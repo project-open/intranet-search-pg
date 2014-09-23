@@ -149,20 +149,3 @@
   </td>
 </tr>
 </table>
-
-
-<if @from_result_page@ lt @to_result_page@>
-  <center>
-
-    <small>#intranet-search-pg.Result_page#</small>
-
-    <if @from_result_page@ lt @current_result_page@>
-      <small><a href=@url_previous@><font color=0000cc><b>#intranet-search-pg.Previous#</b></font></a></small>
-    </if>
-
-    
-    <if @current_result_page@ lt @to_result_page@>
-	<small><a href=@url_next@><font color=0000cc><b>#intranet-search-pg.Next#</b></font></a></small>
-    </if>
-  </center>
-</if>

@@ -823,28 +823,13 @@ set result_page_html ""
 
 for {set i $from_result_page} {$i <= $to_result_page} { incr i } {
     set page_offset [expr ($i-1) * $results_per_page]
-    set url "search?q=${urlencoded_query}&offset=$page_offset"
+    set url [export_vars -base "/intranet-search/search" {q {offset $page_offset}}]
+    foreach t $type {
+	append url "&type=$t"
+    }
     if {$i == $current_result_page} {
 	append result_page_html "$i "
     } else {
 	append result_page_html "<a href=\"$url\">$i</a> "
     }
 }
-
-
-set url_previous ""
-set url_next ""
-append url_previous "search?q=${urlencoded_query}"
-append url_next "search?q=${urlencoded_query}"
-if { [expr $current_result_page - 1] > $from_result_page } { 
-    append url_previous "&offset=[expr ($current_result_page - 2) * $results_per_page]"
-}
-if { $current_result_page < $to_result_page } { 
-    append url_next "&offset=[expr $current_result_page * $results_per_page]"
-}
-if { $results_per_page > 0 } {
-    append url_previous "&results_per_page=$results_per_page"
-    append url_next "&results_per_page=$results_per_page"
-}
-
-

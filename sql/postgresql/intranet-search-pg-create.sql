@@ -1099,6 +1099,11 @@ declare
 	v_ctr		integer;
 	row		RECORD;
 begin
+        -- Check if the table exists
+        select  count(*) into v_count from user_tab_columns
+        where   lower(table_name) = 'im_conf_items';
+        if v_count = 0 then return 1; end if;
+
 	select count(*) into v_count from im_conf_items;
 	v_ctr := 0;
 	FOR row IN

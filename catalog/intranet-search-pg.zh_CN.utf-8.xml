@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<message_catalog package_key="intranet-search-pg" package_version="3.4.0.7.0" locale="zh_CN" charset="utf-8">
+<message_catalog package_key="intranet-search-pg" locale="zh_CN" charset="utf-8">
 
   <msg key="Advanced_Search">高级搜索</msg>
   <msg key="Bad_Query">糟糕的查询</msg>

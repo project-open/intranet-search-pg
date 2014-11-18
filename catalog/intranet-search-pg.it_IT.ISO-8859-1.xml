@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<message_catalog package_key="intranet-search-pg" package_version="3.4.0.7.0" locale="it_IT" charset="ISO-8859-1">
+<message_catalog package_key="intranet-search-pg" locale="it_IT" charset="ISO-8859-1">
 
   <msg key="Advanced_Search">Ricerca avanzata</msg>
   <msg key="Bad_Query">Consulta non corretta</msg>

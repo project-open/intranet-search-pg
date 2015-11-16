@@ -5,7 +5,7 @@
 <form method=GET action=search>
 
 
-<table width=100%>
+<table width="100%">
 <tr>
   <td width="70%">
 

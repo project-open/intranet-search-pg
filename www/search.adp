@@ -48,14 +48,14 @@
 </form>
 
 
-<table width=100% border=0 cellpadding=0 cellspacing=0>
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
 <tr>
   <td bgcolor=#fff height=1 >
   </td>
 </tr>
 </table>
 
-<table width=100% border=0 cellpadding=0 cellspacing=0 bgcolor=#e5ecf9>
+<table width="100%" border=0 cellpadding=0 cellspacing=0 bgcolor=#e5ecf9>
 <tr>
   <td bgcolor=#e5ecf9 nowrap>
   <font size=+1>&nbsp;<b>
@@ -113,14 +113,14 @@
 <center>
 
 
-<table width=100% border=0 cellpadding=0 cellspacing=0>
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
 <tr>
   <td bgcolor=#ffffff>
   </td>
 </tr>
 </table>
 
-<table width=100% border=0 cellpadding=0 cellspacing=0 bgcolor=#e5ecf9>
+<table width="100%" border=0 cellpadding=0 cellspacing=0 bgcolor=#e5ecf9>
 <tr>
   <td bgcolor=#e5ecf9 colspan=99>&nbsp;</td>
 </tr>
@@ -143,7 +143,7 @@
 </tr>
 </table>
 
-<table width=100% border=0 cellpadding=0 cellspacing=0>
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
 <tr>
   <td bgcolor=#ffffff>
   </td>

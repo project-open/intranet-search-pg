@@ -82,7 +82,7 @@ if {"" == $q} {
 }
 
 if { $results_per_page <= 0} {
-    set results_per_page [ad_parameter -package_id $package_id SearchResultsPerPage -default 20]
+    set results_per_page [im_parameter -package_id $package_id SearchResultsPerPage -default 20]
 } else {
     set results_per_page $results_per_page
 }

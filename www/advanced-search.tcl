@@ -24,7 +24,7 @@ ad_page_contract {
 set package_id [ad_conn package_id]
 
 if { $num == 0 } {
-    set num [ad_parameter -package_id $package_id LimitDefault]
+    set num [im_parameter -package_id $package_id LimitDefault]
 }
 
 set page_title [lang::message::lookup "" intranet-search-pg.Advanced_Search "Advanced Search"]

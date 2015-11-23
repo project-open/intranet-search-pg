@@ -62,7 +62,7 @@ ad_proc -public im_tsvector_to_headline {
     foreach token $ts_list {
 	set token [string trim $token]
 
-	if {1 == [expr $ctr % 2]} {
+	if {1 == [expr {$ctr % 2}]} {
 	    set word $token
 	} else {
 	    set token [string range $token 1 end]
@@ -84,7 +84,7 @@ ad_proc -public im_tsvector_to_headline {
 	    append result " "
 	    set last_id $i
 	}
-	if {1 == [expr $i - $last_i]} {
+	if {1 == [expr {$i - $last_i}]} {
 	    append result ".. "
 	}
     }

@@ -1,6 +1,6 @@
 <master>
-<property name="title">@page_title@</property>
-<property name="context">@context;noquote@</property>
+<property name="doc(title)">@page_title;literal@</property>
+<property name="context">@context;literal@</property>
 
 <br>
 <form method=GET action=search>
@@ -12,16 +12,16 @@
 <!--    <%= [im_logo] %>  -->
   </td>
   <td>
-    <input type=text name=q size=31 maxlength=256 value="@query@">
-    <input type=submit value="#intranet-search-pg.Search#" name=t>
+    <input type="text" name="q" size="31" maxlength="256" value="@query@">
+    <input type="submit" value="#intranet-search-pg.Search#" name="t">
   </td>
   <td>
 
 	<table>
-	<tr><td colspan=2>Search for specific object types:</td></tr>
-	<tr valign=top>
-	  <td align=center>
-		<table cellspacing=0 cellpadding=0>
+	<tr><td colspan="2">Search for specific object types:</td></tr>
+	<tr valign="top">
+	  <td align="center">
+		<table cellspacing="0" cellpadding="0">
 		<tr class=rowtitle>
 		<td class=rowtitle><input type="checkbox" name="_dummy" onclick="acs_ListCheckAll('type',this.checked)" checked></td>
 		<td class=rowtitle><%= [lang::message::lookup "" intranet-search-pg.Search_Object_Type "Search Object Type"] %>
@@ -30,9 +30,9 @@
 		</table>
 	  </td>
 	  <td>
-		<table cellspacing=0 cellpadding=0>
+		<table cellspacing="0" cellpadding="0">
 		<tr class=rowtitle>
-		  <td class=rowtitle><input type=checkbox name='include_deleted_p' value="1"></td>
+		  <td class=rowtitle><input type="checkbox" name='include_deleted_p' value="1"></td>
 		  <td class=rowtitle>#intranet-search-pg.Include_Deleted#</td>
 		</tr>
 		</table>
@@ -48,21 +48,21 @@
 </form>
 
 
-<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
 <tr>
-  <td bgcolor=#fff height=1 >
+  <td bgcolor="#fff" height=1 >
   </td>
 </tr>
 </table>
 
-<table width="100%" border=0 cellpadding=0 cellspacing=0 bgcolor=#e5ecf9>
+<table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#e5ecf9">
 <tr>
-  <td bgcolor=#e5ecf9 nowrap>
+  <td bgcolor="#e5ecf9" nowrap>
   <font size=+1>&nbsp;<b>
     Intranet Results
   </b></font>&nbsp;
 </td>
-<td bgcolor=#e5ecf9 align=right nowrap>
+<td bgcolor="#e5ecf9" align="right" nowrap>
   <font size=-1>
     #intranet-search-pg.Results#
     <b>@offset;noquote@</b> - <b><%= [expr $offset + $results_per_page] %></b> 
@@ -113,25 +113,25 @@
 <center>
 
 
-<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
 <tr>
-  <td bgcolor=#ffffff>
+  <td bgcolor="#ffffff">
   </td>
 </tr>
 </table>
 
-<table width="100%" border=0 cellpadding=0 cellspacing=0 bgcolor=#e5ecf9>
+<table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#e5ecf9">
 <tr>
-  <td bgcolor=#e5ecf9 colspan=99>&nbsp;</td>
+  <td bgcolor="#e5ecf9" colspan="99">&nbsp;</td>
 </tr>
 <tr>
-  <td bgcolor=#e5ecf9 align=center>
+  <td bgcolor="#e5ecf9" align="center">
   <form method=GET action=search>
   <table>
     <tr>
       <td>
-        <input type=text name=q size=31 maxlength=256 value="@query@">
-        <input type=submit value="#intranet-search-pg.Search#" name=t>
+        <input type="text" name="q" size="31" maxlength="256" value="@query@">
+        <input type="submit" value="#intranet-search-pg.Search#" name="t">
       </td>
     </tr>
   </table>
@@ -139,13 +139,13 @@
   </td>
 </tr>
 <tr>
-  <td bgcolor=#e5ecf9 colspan=99>&nbsp;</td>
+  <td bgcolor="#e5ecf9" colspan="99">&nbsp;</td>
 </tr>
 </table>
 
-<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
 <tr>
-  <td bgcolor=#ffffff>
+  <td bgcolor="#ffffff">
   </td>
 </tr>
 </table>

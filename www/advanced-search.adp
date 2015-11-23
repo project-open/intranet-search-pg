@@ -1,5 +1,5 @@
 <master>
-<property name="title">@page_title@</property>
+<property name="doc(title)">@page_title;literal@</property>
 <property name="context_bar">#intranet-search-pg.Advanced_Search#</property>
 
 <form method=GET action=search>
@@ -13,20 +13,20 @@
 
 	<table>
 	<tr>
-	  <td colspan=1 align=center>
+	  <td colspan="1" align="center">
 	    <%= [im_logo] %>
 	  </td>
 	</tr>
 	<tr>
 	  <td>
-	    <input type=text name=q size=40 maxlength=256 value="@q@">
+	    <input type="text" name="q" size="40" maxlength="256" value="@q@">
 	  </td>
 	  <td>
 	  </td>
 	</tr>
 	<tr>
-	  <td colspan=1 align=center>
-	    <input type=submit value="#intranet-search-pg.Search#" name=t>
+	  <td colspan="1" align="center">
+	    <input type="submit" value="#intranet-search-pg.Search#" name="t">
 	  </td>
 	</tr>
 	</table>

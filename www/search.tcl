@@ -61,7 +61,7 @@ ad_page_contract {
 # Default & Security
 # -----------------------------------------------------------
 
-set current_user_id [ad_maybe_redirect_for_registration]
+set current_user_id [auth::require_login]
 set page_title [lang::message::lookup "" intranet-search-pg.Search_Results_for_query "Search Results for '%q%'"]
 set package_id [ad_conn package_id]
 set package_url [ad_conn package_url]
@@ -74,7 +74,7 @@ set user_is_employee_p [im_user_is_employee_p $current_user_id]
 set user_is_customer_p [im_user_is_customer_p $current_user_id]
 set user_is_wheel_p [im_profile::member_p -profile_id [im_wheel_group_id] -user_id $current_user_id]
 set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $current_user_id]
-set user_is_admin_p [expr $user_is_admin_p || $user_is_wheel_p]
+set user_is_admin_p [expr {$user_is_admin_p || $user_is_wheel_p}]
 
 
 if {"" == $q} {
@@ -87,7 +87,7 @@ if { $results_per_page <= 0} {
     set results_per_page $results_per_page
 }
 
-set limit [expr 100 * $results_per_page]
+set limit [expr {100 * $results_per_page}]
 
 if {[lsearch im_document $type] >= 0} {
     ad_return_complaint 1 "<h3>Not implemented yet</h3>
@@ -217,7 +217,7 @@ set sql "
 
 db_foreach object_type $sql {
     set checked ""
-    if {[string equal $type "all"] || [lsearch $type $object_type] >= 0} {
+    if {$type eq "all" || [lsearch $type $object_type] >= 0} {
 	set checked " checked"
     }
     regsub -all { } $object_type_pretty_name {_} object_type_pretty_name_sub
@@ -466,7 +466,7 @@ foreach t $type {
 } 
 
 set object_type_where "object_type in ([join $types ","])"
-if {[string equal "all" $type]} {
+if {"all" eq $type} {
     set object_type_where "1=1"
 }
 
@@ -810,13 +810,13 @@ db_foreach full_text_query $sql {
 
 
 set tend [clock clicks -milliseconds]
-set elapsed [format "%.02f" [expr double(abs($tend - $t0)) / 1000.0]]
+set elapsed [format "%.02f" [expr {double(abs($tend - $t0)) / 1000.0}]]
 
-set num_results [expr $offset + $count]
+set num_results [expr {$offset + $count}]
 
 set from_result_page 1
 set current_result_page [expr ($offset / $results_per_page) + 1]
-set to_result_page [expr ceil(double($num_results) / double($results_per_page))]
+set to_result_page [expr {ceil(double($num_results) / double($results_per_page))}]
 
 
 set result_page_html ""

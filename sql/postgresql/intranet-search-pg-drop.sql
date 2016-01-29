@@ -13,6 +13,7 @@ select im_menu__del_module('intranet-search-pg');
 select im_component_plugin__del_module('intranet-search-pg');
 
 -- Drop triggers that are available in all ]po[ configurations
+drop trigger cr_items_tsearch_tr on cr_items;
 drop trigger im_forum_topics_tsearch_tr on im_forum_topics;
 drop trigger im_projects_tsearch_tr on im_projects;
 drop trigger im_companies_tsearch_tr on im_companies;
@@ -20,6 +21,7 @@ drop trigger persons_tsearch_tr on persons;
 drop trigger im_invoices_tsearch_tr on im_invoices;
 
 
+drop function content_item_tsearch ();
 drop function im_forum_topics_tsearch ();
 drop function persons_tsearch ();
 drop function im_projects_tsearch ();

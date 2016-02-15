@@ -504,7 +504,7 @@ set sql "
 	select
 		acs_object__name(so.object_id) as name,
 		acs_object__name(so.biz_object_id) as biz_object_name,
-		(rank(so.fti, :q::tsquery) * sot.rel_weight)::numeric(12,2) as rank,
+		(ts_rank(so.fti, :q::tsquery) * sot.rel_weight)::numeric(12,2) as rank,
 		fti as full_text_index,
 		bou.url,
 		so.object_id,
@@ -573,7 +573,7 @@ set sql "
 		and so.biz_object_id = readable_biz_objs.object_id
 		and so.fti @@ to_tsquery('default',:q)
 	order by
-		(rank(so.fti, :q::tsquery) * sot.rel_weight) DESC
+		(ts_rank(so.fti, :q::tsquery) * sot.rel_weight) DESC
 	offset :offset
 	limit :limit
 "
@@ -602,7 +602,7 @@ db_foreach full_text_query $sql {
     }
     
     set text [im_tsvector_to_headline $full_text_index]
-    set headline [db_string headline "select headline(:text, :q::tsquery)" -default ""]
+    set headline [db_string headline "select ts_headline(:text, :q::tsquery)" -default ""]
 
     # Final permission test: Make sure no object slips through security
     # even if it's kind of slow to do this iteratively...

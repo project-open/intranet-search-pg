@@ -56,24 +56,24 @@ create table im_search_object_types (
 -- These versions have a new table "pg_ts_config"
 --
 create or replace function inline_0 ()
-returns integer as '
+returns integer as $$
 declare
 	v_count		integer;
 begin
 	-- Check if the table exists
 	select	count(*) into v_count from user_tab_columns
-	where	lower(table_name) = ''pg_ts_config'';
+	where	lower(table_name) = 'pg_ts_config';
 	if v_count = 0 then return 1; end if;
 
 	-- Check if the entry already exists
 	select	count(*) into v_count from pg_ts_config
-	where	lower(cfgname) = ''default'';
+	where	lower(cfgname) = 'default';
 	if v_count > 0 then return 2; end if;
 
 	CREATE TEXT SEARCH CONFIGURATION public.default (COPY = pg_catalog.english);
 
 	return 0;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 select inline_0 ();
 drop function inline_0 ();
 
@@ -130,7 +130,7 @@ create index im_search_objects_object_id_idx on im_search_objects (object_id);
 -- "strange" characters by standard ASCII characters.
 --
 create or replace function norm_text_utf8 (varchar)
-returns varchar as '
+returns varchar as $$
 declare
 	p_str		alias for $1;
 	p_str1		varchar;
@@ -223,7 +223,7 @@ begin
 --		{197,188,122}	-- LATIN SMALL LETTER Z WITH DOT ABOVE
 
 
-	r := ''{
+	r := '{
 		{197,145,111},
 		{197,177,117},
 		{197,179,117},
@@ -301,11 +301,11 @@ begin
 		{197,186,122},
 		{197,187,122},
 		{197,188,122}
-	}'';
+	}';
 
 
-	v_str := '''';
-	p_str1 := coalesce(p_str, '''');
+	v_str := '';
+	p_str1 := coalesce(p_str, '');
 	v_len := char_length(p_str1);
 	FOR v_i IN 1..v_len LOOP
 		v_char := substr(p_str1, v_i, 1);
@@ -329,25 +329,25 @@ begin
 	END LOOP;
 
 	return v_str;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 
 create or replace function norm_text (varchar)
-returns varchar as '
+returns varchar as $$
 declare
 	p_str	alias for $1;
 	v_str	varchar;
 begin
-	select translate(p_str, ''@.-_'', ''    '')
+	select translate(p_str, '@.-_', '    ')
 	into v_str;
 
 	return norm_text_utf8(v_str);
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 
 
 create or replace function im_search_update (integer, varchar, integer, varchar)
-returns integer as '
+returns integer as $$
 declare
 	p_object_id	alias for $1;
 	p_object_type	alias for $2;
@@ -364,7 +364,7 @@ begin
 	where	object_type = p_object_type;
 
 	-- Add the name for the business object to the search string
-	v_text := acs_object__name(p_biz_object_id) || '' '' || p_text;
+	v_text := acs_object__name(p_biz_object_id) || ' ' || p_text;
 
 	select	count(*)
 	into	v_exists_p
@@ -376,7 +376,7 @@ begin
 		update im_search_objects set
 			object_type_id	= v_object_type_id,
 			biz_object_id	= p_biz_object_id,
-			fti		= to_tsvector(''default'', norm_text(v_text))
+			fti		= to_tsvector('default', norm_text(v_text))
 		where
 			object_id	= p_object_id
 			and object_type_id = v_object_type_id;
@@ -396,13 +396,13 @@ begin
 				p_object_id,
 				v_object_type_id,
 				p_biz_object_id,
-				to_tsvector(''default'', norm_text(v_text))
+				to_tsvector('default', norm_text(v_text))
 			);
 		end if;
 	end if;
 
 	return 0;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 
 
@@ -441,25 +441,23 @@ end;$body$ language 'plpgsql';
 
 
 
-
-
 -----------------------------------------------------------
 -- im_project
 
 insert into im_search_object_types values (0,'im_project',1);
 
 create or replace function im_projects_tsearch ()
-returns trigger as '
+returns trigger as $$
 declare
 	v_string	varchar;
 	v_string2	varchar;
 	v_object_type	varchar;
 begin
-	select	coalesce(project_name, '''') || '' '' ||
-		coalesce(project_nr, '''') || '' '' ||
-		coalesce(project_path, '''') || '' '' ||
-		coalesce(description, '''') || '' '' ||
-		coalesce(note, ''''),
+	select	coalesce(project_name, '') || ' ' ||
+		coalesce(project_nr, '') || ' ' ||
+		coalesce(project_path, '') || ' ' ||
+		coalesce(description, '') || ' ' ||
+		coalesce(note, ''),
 		o.object_type
 	into	v_string, v_object_type
 	from	im_projects p,
@@ -469,46 +467,46 @@ begin
 
 	-- Skip if this is a ticket. There is a special trigger for tickets.
 	-- im_timesheet_task is still handled as a project.
-	IF ''im_ticket'' = v_object_type THEN return new; END IF;
+	IF 'im_ticket' = v_object_type THEN return new; END IF;
 
-	v_string2 := '''';
-	IF column_exists(''im_projects'', ''company_project_nr'') THEN
-		select	coalesce(company_project_nr, '''')
+	v_string2 := '';
+	IF column_exists('im_projects', 'company_project_nr') THEN
+		select	coalesce(company_project_nr, '')
 		into	v_string2
 		from	im_projects
 		where	project_id = new.project_id;
-		v_string := v_string || '' '' || v_string2;
+		v_string := v_string || ' ' || v_string2;
 	END IF;
 
-	perform im_search_update(new.project_id, ''im_project'', new.project_id, v_string);
+	perform im_search_update(new.project_id, 'im_project', new.project_id, v_string);
 
 	return new;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 
 create or replace function im_projects_tsearch_too_slow () 
-returns trigger as '
+returns trigger as $$
 declare
 	v_string	varchar;	v_string2	varchar;
 	v_select	varchar;	v_value		varchar;
 	v_sql		varchar;	row		record;		v_rec	record;
 begin
-	select 	coalesce(project_name, '''') || '' '' || coalesce(project_nr, '''') || '' '' ||
-		coalesce(project_path, '''') || '' '' || coalesce(description, '''') || '' '' ||
-		coalesce(note, '''')
+	select 	coalesce(project_name, '') || ' ' || coalesce(project_nr, '') || ' ' ||
+		coalesce(project_path, '') || ' ' || coalesce(description, '') || ' ' ||
+		coalesce(note, '')
 	into	v_string
 	from	im_projects where project_id = new.project_id;
 
-	v_string2 := '''';
-	if column_exists(''im_projects'', ''company_project_nr'') then
-		select 	coalesce(company_project_nr, '''')
+	v_string2 := '';
+	if column_exists('im_projects', 'company_project_nr') then
+		select 	coalesce(company_project_nr, '')
 		into	v_string2
 		from	im_projects where project_id = new.project_id;
-		v_string := v_string || '' '' || v_string2;
+		v_string := v_string || ' ' || v_string2;
 	end if;
 
 	-- Concat the indexable DynField fields...
-	v_sql := '' '''' '''' '';
+	v_sql := ' '' '' ';
 	FOR row IN
 		select	w.deref_plpgsql_function, 
 			aa.attribute_name
@@ -517,24 +515,24 @@ begin
 			acs_attributes aa
 		where	a.widget_name = w.widget_name and
 			a.acs_attribute_id = aa.attribute_id and
-			aa.object_type = ''im_project'' and
-			a.include_in_search_p = ''t''
+			aa.object_type = 'im_project' and
+			a.include_in_search_p = 't'
 	LOOP
-v_sql := v_sql||'' || '''' '''' ||coalesce(''||row.deref_plpgsql_function||''(''||row.attribute_name||''),0::varchar) '';
+v_sql := v_sql||' || '' '' ||coalesce('||row.deref_plpgsql_function||'('||row.attribute_name||'),0::varchar) ';
 	END LOOP;
 
-	v_sql := ''select '' || v_sql || '' as value from im_projects where project_id = '' || new.project_id;
-	RAISE NOTICE ''im_projects_tsearch: sql=% '', v_sql;
+	v_sql := 'select ' || v_sql || ' as value from im_projects where project_id = ' || new.project_id;
+	RAISE NOTICE 'im_projects_tsearch: sql=% ', v_sql;
 	
 	-- Workaround - execute doesnt work yet with select_into, so we execute as part of a loop..
-	FOR v_rec IN EXECUTE v_sql LOOP v_string := v_string || '' '' || v_rec.value; END LOOP;
+	FOR v_rec IN EXECUTE v_sql LOOP v_string := v_string || ' ' || v_rec.value; END LOOP;
 
-	PERFORM im_search_update(new.project_id, ''im_project'', new.project_id, v_string);
+	PERFORM im_search_update(new.project_id, 'im_project', new.project_id, v_string);
 	return new;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 CREATE TRIGGER im_projects_tsearch_tr 
-BEFORE INSERT or UPDATE
+AFTER INSERT or UPDATE
 ON im_projects
 FOR EACH ROW 
 EXECUTE PROCEDURE im_projects_tsearch();
@@ -547,24 +545,24 @@ EXECUTE PROCEDURE im_projects_tsearch();
 insert into im_search_object_types values (3,'im_company',10);
 
 create or replace function im_companies_tsearch () 
-returns trigger as '
+returns trigger as $$
 begin
 	perform im_search_update(
 		new.company_id, 
-		''im_company'', 
+		'im_company', 
 		new.company_id, 
-		coalesce(new.company_name, '''') || '' '' ||
-		coalesce(new.company_path, '''') || '' '' ||
-		coalesce(new.note, '''') || '' '' ||
-		coalesce(new.referral_source, '''') || '' '' ||
-		coalesce(new.site_concept, '''') || '' '' ||
-		coalesce(new.vat_number, '''')
+		coalesce(new.company_name, '') || ' ' ||
+		coalesce(new.company_path, '') || ' ' ||
+		coalesce(new.note, '') || ' ' ||
+		coalesce(new.referral_source, '') || ' ' ||
+		coalesce(new.site_concept, '') || ' ' ||
+		coalesce(new.vat_number, '')
 	);
 	return new;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 CREATE TRIGGER im_companies_tsearch_tr 
-BEFORE INSERT or UPDATE
+AFTER INSERT or UPDATE
 ON im_companies
 FOR EACH ROW 
 EXECUTE PROCEDURE im_companies_tsearch();
@@ -577,51 +575,51 @@ EXECUTE PROCEDURE im_companies_tsearch();
 insert into im_search_object_types values (1,'user',5);
 
 create or replace function persons_tsearch () 
-returns trigger as '
+returns trigger as $$
 declare
 	v_string	varchar;
 begin
-	select	coalesce(pa.email, '''') || '' '' ||
-		coalesce(pa.url, '''') || '' '' ||
-		coalesce(pe.first_names, '''') || '' '' ||
-		coalesce(pe.last_name, '''') || '' '' ||
-		coalesce(u.username, '''') || '' '' ||
-		coalesce(u.screen_name, '''') || '' '' ||
+	select	coalesce(pa.email, '') || ' ' ||
+		coalesce(pa.url, '') || ' ' ||
+		coalesce(pe.first_names, '') || ' ' ||
+		coalesce(pe.last_name, '') || ' ' ||
+		coalesce(u.username, '') || ' ' ||
+		coalesce(u.screen_name, '') || ' ' ||
 
-		coalesce(home_phone, '''') || '' '' ||
-		coalesce(work_phone, '''') || '' '' ||
-		coalesce(cell_phone, '''') || '' '' ||
-		coalesce(pager, '''') || '' '' ||
-		coalesce(fax, '''') || '' '' ||
-		coalesce(aim_screen_name, '''') || '' '' ||
-		coalesce(msn_screen_name, '''') || '' '' ||
-		coalesce(icq_number, '''') || '' '' ||
+		coalesce(home_phone, '') || ' ' ||
+		coalesce(work_phone, '') || ' ' ||
+		coalesce(cell_phone, '') || ' ' ||
+		coalesce(pager, '') || ' ' ||
+		coalesce(fax, '') || ' ' ||
+		coalesce(aim_screen_name, '') || ' ' ||
+		coalesce(msn_screen_name, '') || ' ' ||
+		coalesce(icq_number, '') || ' ' ||
 
-		coalesce(ha_line1, '''') || '' '' ||
-		coalesce(ha_line2, '''') || '' '' ||
-		coalesce(ha_city, '''') || '' '' ||
-		coalesce(ha_state, '''') || '' '' ||
-		coalesce(ha_postal_code, '''') || '' '' ||
+		coalesce(ha_line1, '') || ' ' ||
+		coalesce(ha_line2, '') || ' ' ||
+		coalesce(ha_city, '') || ' ' ||
+		coalesce(ha_state, '') || ' ' ||
+		coalesce(ha_postal_code, '') || ' ' ||
 
-		coalesce(wa_line1, '''') || '' '' ||
-		coalesce(wa_line2, '''') || '' '' ||
-		coalesce(wa_city, '''') || '' '' ||
-		coalesce(wa_state, '''') || '' '' ||
-		coalesce(wa_postal_code, '''') || '' '' ||
+		coalesce(wa_line1, '') || ' ' ||
+		coalesce(wa_line2, '') || ' ' ||
+		coalesce(wa_city, '') || ' ' ||
+		coalesce(wa_state, '') || ' ' ||
+		coalesce(wa_postal_code, '') || ' ' ||
 
-		coalesce(note, '''') || '' '' ||
-		coalesce(current_information, '''') || '' '' ||
+		coalesce(note, '') || ' ' ||
+		coalesce(current_information, '') || ' ' ||
 
-		coalesce(ha_cc.country_name, '''') || '' '' ||
-		coalesce(wa_cc.country_name, '''') || '' '' ||
+		coalesce(ha_cc.country_name, '') || ' ' ||
+		coalesce(wa_cc.country_name, '') || ' ' ||
 
-		coalesce(im_cost_center_name_from_id(department_id), '''') || '' '' ||
-		coalesce(job_title, '''') || '' '' ||
-		coalesce(job_description, '''') || '' '' ||
-		coalesce(skills, '''') || '' '' ||
-		coalesce(educational_history, '''') || '' '' ||
-		coalesce(last_degree_completed, '''') || '' '' ||
-		coalesce(termination_reason, '''')
+		coalesce(im_cost_center_name_from_id(department_id), '') || ' ' ||
+		coalesce(job_title, '') || ' ' ||
+		coalesce(job_description, '') || ' ' ||
+		coalesce(skills, '') || ' ' ||
+		coalesce(educational_history, '') || ' ' ||
+		coalesce(last_degree_completed, '') || ' ' ||
+		coalesce(termination_reason, '')
 
 	into	v_string
 	from
@@ -637,9 +635,9 @@ begin
 		and pe.person_id = pa.party_id
 	;
 
-	perform im_search_update(new.person_id, ''user'', new.person_id, v_string);
+	perform im_search_update(new.person_id, 'user', new.person_id, v_string);
 	return new;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 
 
@@ -650,7 +648,7 @@ end;' language 'plpgsql';
 -- machine.
 
 CREATE TRIGGER persons_tsearch_tr 
-BEFORE INSERT or UPDATE
+AFTER INSERT or UPDATE
 ON persons
 FOR EACH ROW 
 EXECUTE PROCEDURE persons_tsearch();
@@ -663,28 +661,30 @@ insert into im_search_object_types values (2,'im_forum_topic',0.5);
 
 
 create or replace function im_forum_topics_tsearch () 
-returns trigger as '
+returns trigger as $$
 declare
 	v_string	varchar;
 begin
-	select	coalesce(topic_name, '''') || '' '' ||
-		coalesce(subject, '''') || '' '' ||
-		coalesce(message, '''')
+	select	coalesce(topic_name, '') || ' ' ||
+		coalesce(subject, '') || ' ' ||
+		coalesce(message, '')
 	into	v_string
 	from	im_forum_topics
 	where	topic_id = new.topic_id;
 
+	RAISE NOTICE 'TSearch2: Updating forum_topic % of %: %', new.topic_id, new.object_id, v_string;
+
 	perform im_search_update(
 		new.topic_id, 
-		''im_forum_topic'', 
+		'im_forum_topic', 
 		new.object_id, 
 		v_string
 	);
 	return new;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 CREATE TRIGGER im_forum_topics_tsearch_tr 
-BEFORE INSERT or UPDATE
+AFTER INSERT or UPDATE
 ON im_forum_topics
 FOR EACH ROW 
 EXECUTE PROCEDURE im_forum_topics_tsearch();
@@ -702,15 +702,15 @@ EXECUTE PROCEDURE im_forum_topics_tsearch();
 insert into im_search_object_types values (4,'im_invoice',1);
 
 create or replace function im_invoice_tsearch ()
-returns trigger as '
+returns trigger as $$
 declare
 	v_string	varchar;
 begin
-	select	coalesce(i.invoice_nr, '''') || '' '' ||
-		coalesce(c.cost_nr, '''') || '' '' ||
-		coalesce(c.cost_name, '''') || '' '' ||
-		coalesce(c.description, '''') || '' '' ||
-		coalesce(c.note, '''')
+	select	coalesce(i.invoice_nr, '') || ' ' ||
+		coalesce(c.cost_nr, '') || ' ' ||
+		coalesce(c.cost_name, '') || ' ' ||
+		coalesce(c.description, '') || ' ' ||
+		coalesce(c.note, '')
 	into
 		v_string
 	from
@@ -720,12 +720,12 @@ begin
 		i.invoice_id = c.cost_id
 		and i.invoice_id = new.invoice_id;
 
-	perform im_search_update(new.invoice_id, ''im_invoice'', new.invoice_id, v_string);
+	perform im_search_update(new.invoice_id, 'im_invoice', new.invoice_id, v_string);
 	return new;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 CREATE TRIGGER im_invoices_tsearch_tr
-BEFORE INSERT or UPDATE
+AFTER INSERT or UPDATE
 ON im_invoices
 FOR EACH ROW
 EXECUTE PROCEDURE im_invoice_tsearch();
@@ -740,27 +740,27 @@ EXECUTE PROCEDURE im_invoice_tsearch();
 insert into im_search_object_types values (8,'im_ticket',0.7);
 
 create or replace function im_tickets_tsearch ()
-returns trigger as '
+returns trigger as $$
 declare
 	v_string	varchar;
 begin
-	select	coalesce(p.project_name, '''') || '' '' ||
-		coalesce(p.project_nr, '''') || '' '' ||
-		coalesce(p.project_path, '''') || '' '' ||
-		coalesce(p.description, '''') || '' '' ||
-		coalesce(p.note, '''') || '' '' ||
-		coalesce(t.ticket_note, '''') || '' '' ||
-		coalesce(t.ticket_description, '''')
+	select	coalesce(p.project_name, '') || ' ' ||
+		coalesce(p.project_nr, '') || ' ' ||
+		coalesce(p.project_path, '') || ' ' ||
+		coalesce(p.description, '') || ' ' ||
+		coalesce(p.note, '') || ' ' ||
+		coalesce(t.ticket_note, '') || ' ' ||
+		coalesce(t.ticket_description, '')
 	into	v_string
 	from	im_tickets t,
 		im_projects p
 	where	p.project_id = new.ticket_id and
 		t.ticket_id = p.project_id;
 
-	perform im_search_update(new.ticket_id, ''im_ticket'', new.ticket_id, v_string);
+	perform im_search_update(new.ticket_id, 'im_ticket', new.ticket_id, v_string);
 
 	return new;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 
 CREATE TRIGGER im_tickets_tsearch_tr
@@ -785,31 +785,31 @@ insert into im_search_object_types values (6,'im_fs_file',0.1);
 insert into im_search_object_types values (7,'content_item',0.5);
 
 create or replace function content_item_tsearch ()
-returns trigger as '
+returns trigger as $$
 declare
 	v_string varchar;
 	v_string2 varchar;
 begin
-	select	coalesce(name, '''') || '' '' || coalesce(content, '''')
+	select	coalesce(name, '') || ' ' || coalesce(content, '')
 	into	v_string
 	from	cr_items,cr_revisions 
 	where	cr_items.latest_revision=cr_revisions.revision_id
 		and cr_items.item_id=new.item_id;
 
-	perform im_search_update(new.item_id, ''content_item'', new.item_id, v_string);
+	perform im_search_update(new.item_id, 'content_item', new.item_id, v_string);
 
 	return new;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 
 CREATE TRIGGER cr_items_tsearch_tr
-BEFORE INSERT or UPDATE
+AFTER INSERT or UPDATE
 ON cr_items
 FOR EACH ROW 
 EXECUTE PROCEDURE content_item_tsearch();
 
 
-create or replace function content_item__name (integer) returns varchar as '
+create or replace function content_item__name (integer) returns varchar as $$
 DECLARE
 	v_content_item_id alias for $1;
 	v_name varchar;
@@ -818,7 +818,7 @@ BEGIN
 	where	item_id = v_content_item_id;
 
 	return v_name;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 
 
@@ -831,38 +831,38 @@ insert into im_search_object_types values (9, 'im_conf_item', 0.8);
 
 
 create or replace function im_conf_items_tsearch ()
-returns trigger as '
+returns trigger as $$
 declare
 	v_string	varchar;
 begin
-	select	coalesce(c.conf_item_code, '''') || '' '' ||
-		coalesce(c.conf_item_name, '''') || '' '' ||
-		coalesce(c.conf_item_nr, '''') || '' '' ||
-		coalesce(c.conf_item_version, '''') || '' '' ||
-		coalesce(c.description, '''') || '' '' ||
-		coalesce(c.ip_address, '''') || '' '' ||
-		coalesce(c.note, '''') || '' '' ||
-		coalesce(c.ocs_deviceid, '''') || '' '' ||
-		coalesce(c.ocs_id, '''') || '' '' ||
-		coalesce(c.ocs_username, '''') || '' '' ||
-		coalesce(c.os_comments, '''') || '' '' ||
-		coalesce(c.os_name, '''') || '' '' ||
-		coalesce(c.os_version, '''') || '' '' ||
-		coalesce(c.processor_text, '''') || '' '' ||
-		coalesce(c.win_company, '''') || '' '' ||
-		coalesce(c.win_owner, '''') || '' '' ||
-		coalesce(c.win_product_id, '''') || '' '' ||
-		coalesce(c.win_product_key, '''') || '' '' ||
-		coalesce(c.win_userdomain, '''') || '' '' ||
-		coalesce(c.win_workgroup, '''')
+	select	coalesce(c.conf_item_code, '') || ' ' ||
+		coalesce(c.conf_item_name, '') || ' ' ||
+		coalesce(c.conf_item_nr, '') || ' ' ||
+		coalesce(c.conf_item_version, '') || ' ' ||
+		coalesce(c.description, '') || ' ' ||
+		coalesce(c.ip_address, '') || ' ' ||
+		coalesce(c.note, '') || ' ' ||
+		coalesce(c.ocs_deviceid, '') || ' ' ||
+		coalesce(c.ocs_id, '') || ' ' ||
+		coalesce(c.ocs_username, '') || ' ' ||
+		coalesce(c.os_comments, '') || ' ' ||
+		coalesce(c.os_name, '') || ' ' ||
+		coalesce(c.os_version, '') || ' ' ||
+		coalesce(c.processor_text, '') || ' ' ||
+		coalesce(c.win_company, '') || ' ' ||
+		coalesce(c.win_owner, '') || ' ' ||
+		coalesce(c.win_product_id, '') || ' ' ||
+		coalesce(c.win_product_key, '') || ' ' ||
+		coalesce(c.win_userdomain, '') || ' ' ||
+		coalesce(c.win_workgroup, '')
 	into	v_string
 	from	im_conf_items c
 	where   c.conf_item_id = new.conf_item_id;
 
-	perform im_search_update(new.conf_item_id, ''im_conf_item'', new.conf_item_id, v_string);
+	perform im_search_update(new.conf_item_id, 'im_conf_item', new.conf_item_id, v_string);
 
 	return new;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 
 
 
@@ -901,20 +901,20 @@ drop function inline_0 ();
 -- fraber 110327: This does not work for PG 8.4 somehow...
 --
 create or replace function inline_0 ()
-returns integer as '
+returns integer as $$
 declare
 	v_count		integer;
 begin
 	select	count(*) into v_count from user_tab_columns
-	where	lower(table_name) = ''pg_ts_cfg'';
+	where	lower(table_name) = 'pg_ts_cfg';
 	if v_count = 0 then return 1; end if;
 
 	update pg_ts_cfg set 
-		locale = (select setting from pg_settings where name = ''lc_messages'')
-	where ts_name = ''default'';
+		locale = (select setting from pg_settings where name = 'lc_messages')
+	where ts_name = 'default';
 
 	return 0;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 select inline_0 ();
 drop function inline_0 ();
 
@@ -924,33 +924,26 @@ drop function inline_0 ();
 -- These versions have a new table "pg_ts_config"
 --
 create or replace function inline_0 ()
-returns integer as '
+returns integer as $$
 declare
 	v_count		integer;
 begin
 	-- Check if the table exists
 	select	count(*) into v_count from user_tab_columns
-	where	lower(table_name) = ''pg_ts_config'';
+	where	lower(table_name) = 'pg_ts_config';
 	if v_count = 0 then return 1; end if;
 
 	-- Check if the entry already exists
 	select	count(*) into v_count from pg_ts_config
-	where	lower(cfgname) = ''default'';
+	where	lower(cfgname) = 'default';
 	if v_count > 0 then return 2; end if;
 
 	CREATE TEXT SEARCH CONFIGURATION public.default (COPY = pg_catalog.english);
 
 	return 0;
-end;' language 'plpgsql';
+end;$$ language 'plpgsql';
 select inline_0 ();
 drop function inline_0 ();
-
-
-
-
-
-
-
 
 
 

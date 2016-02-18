@@ -16,6 +16,7 @@ select im_component_plugin__del_module('intranet-search-pg');
 drop trigger cr_items_tsearch_tr on cr_items;
 drop trigger im_forum_topics_tsearch_tr on im_forum_topics;
 drop trigger im_projects_tsearch_tr on im_projects;
+drop trigger im_tickets_tsearch_tr on im_tickets;
 drop trigger im_companies_tsearch_tr on im_companies;
 drop trigger persons_tsearch_tr on persons;
 drop trigger im_invoices_tsearch_tr on im_invoices;
@@ -44,7 +45,7 @@ begin
 
 	select count(*) into v_count from pg_proc where proname = 'im_conf_items_tsearch';
 	IF v_count > 0 THEN
-		drop function im_conf_items_tsearch;
+		drop function im_conf_items_tsearch();
 	END IF;
 
 	return 0;

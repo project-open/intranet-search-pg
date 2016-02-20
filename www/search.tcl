@@ -506,17 +506,18 @@ set sql "
 		acs_object__name(so.biz_object_id) as biz_object_name,
 		(ts_rank(so.fti, :q::tsquery) * sot.rel_weight)::numeric(12,2) as rank,
 		fti as full_text_index,
-		bou.url,
+		(select min(url) from im_biz_object_urls where url_type = 'view' and object_type = sot.object_type) as object_url,
+		(select min(url) from im_biz_object_urls where url_type = 'view' and object_type = readable_biz_objs.object_type) as biz_object_url,
 		so.object_id,
 		sot.object_type,
-		aot.pretty_name as object_type_pretty_name,
+		(select aot.pretty_name from acs_object_types aot where aot.object_type = sot.object_type) as object_type_pretty_name,
+		(select aot2.pretty_name from acs_object_types aot2 where aot2.object_type = readable_biz_objs.object_type) as biz_object_type_pretty_name,
 		so.biz_object_id,
 		so.popularity,
 		readable_biz_objs.object_type as biz_object_type,
                 readable_biz_objs.object_sub_type_id as object_sub_type_id
 	from
 		im_search_objects so,
-		acs_object_types aot,
 		(	select	*
 			from	im_search_object_types 
 			where	$object_type_where
@@ -559,19 +560,10 @@ set sql "
                         where   1=1
 		    $conf_item_union
 		    $event_union
-		) readable_biz_objs,
-		acs_objects o
-		LEFT OUTER JOIN (
-			select	*
-			from	im_biz_object_urls
-			where	url_type = 'view'
-		) bou ON (o.object_type = bou.object_type)
-	where
-		readable_biz_objs.object_id = o.object_id 
-		and so.object_type_id = sot.object_type_id
-		and sot.object_type = aot.object_type
-		and so.biz_object_id = readable_biz_objs.object_id
-		and so.fti @@ to_tsquery('default',:q)
+		) readable_biz_objs
+	where	so.object_type_id = sot.object_type_id and
+		so.biz_object_id = readable_biz_objs.object_id and
+		so.fti @@ to_tsquery('default',:q)
 	order by
 		(ts_rank(so.fti, :q::tsquery) * sot.rel_weight) DESC
 	offset :offset
@@ -585,7 +577,9 @@ db_foreach full_text_query $sql {
 
     # Localize the object type
     regsub -all { } $object_type_pretty_name {_} object_type_pretty_name_sub
+    regsub -all { } $biz_object_type_pretty_name {_} biz_object_type_pretty_name_sub
     set object_type_pretty_name [lang::message::lookup "" intranet-core.$object_type_pretty_name_sub $object_type_pretty_name]
+    set biz_object_type_pretty_name [lang::message::lookup "" intranet-core.$biz_object_type_pretty_name_sub $biz_object_type_pretty_name]
 
 
     # Skip further permissions checking if we reach the
@@ -597,8 +591,8 @@ db_foreach full_text_query $sql {
     }
 
     set name_link $name
-    if {"" != $url} {
-	set name_link "<a href=\"$url$object_id\">$name</a>\n"
+    if {"" != $object_url} {
+	set name_link "<a href=\"$object_url$object_id\">$name</a>\n"
     }
     
     set text [im_tsvector_to_headline $full_text_index]
@@ -636,10 +630,7 @@ db_foreach full_text_query $sql {
 	    "
 	    if {!$file_permission_p} { continue }
 
-	    # Only with files - biz_object_id==0 means Home Filestorage
-#	    if {0 == $biz_object_id} { set biz_object_name [lang::message::lookup "" intranet-fs.Home_Filestorage "Home Filestorage"] }
-
-	    set name_link "<a href=\"$url$biz_object_id&view_name=files\">$biz_object_name</a>: $filename\n"
+	    set name_link "<a href=\"$object_url$biz_object_id&view_name=files\">$biz_object_name</a>: $filename\n"
 	}
 	im_forum_topic { 
 	    # The topic is readable if it's business object is readable
@@ -674,8 +665,7 @@ db_foreach full_text_query $sql {
 
 	    # Determine the permissions for the forum item
 	    db_0or1row forum_perm "
-		select
-			t.subject,
+		select	t.subject,
 			im_forum_permission(
 				:current_user_id::integer,
 				t.owner_id,
@@ -687,13 +677,11 @@ db_foreach full_text_query $sql {
 				:user_is_employee_p::integer,
 				:user_is_customer_p::integer
 			) as forum_permission_p
-		from
-			im_forum_topics t
-		where
-			t.topic_id = :object_id
+		from	im_forum_topics t
+		where	t.topic_id = :object_id
 	    "
 	    if {!$forum_permission_p} { continue }
-	    set name_link "<a href=\"$url$object_id\">$biz_object_name: $subject</a>\n"
+	    set name_link "<a href=\"$object_url$object_id\">$biz_object_name: $subject</a>\n"
 
 	}
 	content_item {
@@ -769,7 +757,8 @@ db_foreach full_text_query $sql {
 		where	parents.project_id = children.parent_id and
 			children.project_id = :object_id
 	    "
-	    set parent_html "<font>[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: <a href=\"[export_vars -base "/intranet/projects/view" {{project_id $parent_id}}]\">$parent_name</a></font><br>\n"
+	    set parent_html "<font>[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: 
+	    	<a href=\"[export_vars -base "/intranet/projects/view" {{project_id $parent_id}}]\">$parent_name</a></font><br>\n"
 	    if {"" == $parent_name} { set parent_html "" }
 	    append result_html "
 	      <tr>
@@ -787,7 +776,8 @@ db_foreach full_text_query $sql {
             append result_html "
               <tr>
                 <td>
-                  <font>[lang::message::lookup "" intranet-cost.FinancialDocument "Financial Document"] ([lang::message::lookup "" $l10n_key "[im_cost_type_short_name $object_sub_type_id]"]): $name_link</font><br>
+                  <font>[lang::message::lookup "" intranet-cost.FinancialDocument "Financial Document"]:
+		   ([lang::message::lookup "" $l10n_key "[im_cost_type_short_name $object_sub_type_id]"]): $name_link</font><br>
                   $headline
                   <br>&nbsp;
                 </td>
@@ -795,10 +785,17 @@ db_foreach full_text_query $sql {
             "
 	}
 	default {
+	    set parent_html ""
+
+	    if {"" ne $biz_object_id && "" ne $biz_object_url && $biz_object_id ne $object_id} {
+		set biz_object_name_link "<a href='$biz_object_url$biz_object_id'>$biz_object_name</a>"
+		set parent_html "[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: $biz_object_type_pretty_name: $biz_object_name_link<br>"
+	    }
 	    append result_html "
 	      <tr>
 		<td>
-		  <font>$object_type_pretty_name: $name_link</font><br>
+		  $object_type_pretty_name: $name_link<br>
+		  $parent_html
 		  $headline
 		  <br>&nbsp;
 		</td>

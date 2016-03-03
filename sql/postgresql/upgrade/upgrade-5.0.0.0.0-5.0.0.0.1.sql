@@ -25,18 +25,29 @@ CREATE TRIGGER im_tickets_tsearch_tr AFTER INSERT or UPDATE ON im_tickets FOR EA
 CREATE TRIGGER persons_tsearch_tr AFTER INSERT OR UPDATE ON persons FOR EACH ROW EXECUTE PROCEDURE persons_tsearch();
 
 
-create or replace function inline_0()
-returns int as $$
-DECLARE
-	v_count integer;
-BEGIN
-	select	count(*) into v_count
-	from	pg_proc where proname = 'im_fs_files_tsearch';
-	IF v_count > 0 THEN
-		CREATE TRIGGER im_fs_files_tsearch_tr AFTER INSERT OR UPDATE 
-		ON im_fs_files FOR EACH ROW EXECUTE PROCEDURE im_fs_files_tsearch();
-	END IF;
-END;$$ language 'plpgsql';
-select inline_0();
-drop function inline_0();
+create or replace function im_fs_files_tsearch ()
+returns trigger as $$
+declare
+	v_string	varchar;
+	v_string2	varchar;
+	oid		integer;
+begin
+	select	coalesce(translate(ff.path, '/.,-_()&', '        '), '') 
+			|| ' ' || coalesce(f.filename, '') 
+			|| ' ' ||  coalesce(f.fti_content, ''),
+		ff.object_id
+	into	v_string, oid
+	from	im_fs_files f,
+		im_fs_folders ff
+	where	f.folder_id = ff.folder_id
+		and file_id = new.file_id;
+
+	perform im_search_update(new.file_id, 'im_fs_file', oid, v_string);
+
+	return new;
+end;$$ language 'plpgsql';
+
+
+CREATE TRIGGER im_fs_files_tsearch_tr AFTER INSERT OR UPDATE 
+ON im_fs_files FOR EACH ROW EXECUTE PROCEDURE im_fs_files_tsearch();
 

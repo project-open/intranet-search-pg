@@ -632,7 +632,7 @@ db_foreach full_text_query $sql {
 
 	    set name_link "<a href=\"$object_url$biz_object_id&view_name=files\">$biz_object_name</a>: $filename\n"
 	}
-	im_forum_topic { 
+	im_forum_topic {
 	    # The topic is readable if it's business object is readable
 	    # AND if the user belongs to the right "sphere"
 
@@ -658,12 +658,8 @@ db_foreach full_text_query $sql {
 				)::integer\n"
 	    if {$user_is_admin_p} { set object_admin_sql "1::integer\n" }
 
-	    # 070802 fraber: This line fixes a rare situation where
-	    # the im_search_objects contains a forum line that doesn't exist.
-	    # However, I couldn't reproduce how the line got there.
-	    set forum_permission_p 0
-
 	    # Determine the permissions for the forum item
+	    set forum_permission_p 0
 	    db_0or1row forum_perm "
 		select	t.subject,
 			im_forum_permission(
@@ -681,8 +677,8 @@ db_foreach full_text_query $sql {
 		where	t.topic_id = :object_id
 	    "
 	    if {!$forum_permission_p} { continue }
+#	    set name_link "<a href=\"$url$object_id\">$biz_object_name: $subject</a>\n"
 	    set name_link "<a href=\"$object_url$object_id\">$biz_object_name: $subject</a>\n"
-
 	}
 	content_item {
 	    db_1row content_item_detail "
@@ -771,6 +767,31 @@ db_foreach full_text_query $sql {
 	      </tr>
 	    "
 	}
+	im_forum_topic {
+	    set parent_name ""
+	    set parent_id ""
+	    db_0or1row parent_info "
+		select	acs_object__name(object_id) as parent_name,
+			object_id as parent_id,
+			(select min(url) from im_biz_object_urls where object_type = 'im_forum_topic' and url_type = 'view') as parent_url,
+			(select min(url) from im_biz_object_urls where object_type = :object_type and url_type = 'view') as object_url,
+
+		from	im_forum_topics
+		where	topic_id = :object_id
+	    "
+	    set parent_html "<font>[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: <a href=\"$parent_url$parent_id\">$parent_name</a></font><br>\n"
+	    if {"" == $parent_name} { set parent_html "" }
+	    append result_html "
+	      <tr>
+		<td>
+		  <font>$object_type_pretty_name: $name_link</font><br>
+		  $parent_html
+		  $headline
+		  <br>&nbsp;
+		</td>
+	      </tr>
+	    "
+	}
         im_invoice {
 	    set l10n_key "intranet-cost.[im_cost_type_short_name $object_sub_type_id]"
             append result_html "
@@ -793,6 +814,7 @@ db_foreach full_text_query $sql {
 	    }
 	    append result_html "
 	      <tr>
+                <td>object_type=$object_type, url=$url</td>
 		<td>
 		  $object_type_pretty_name: $name_link<br>
 		  $parent_html

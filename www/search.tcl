@@ -771,12 +771,16 @@ db_foreach full_text_query $sql {
 	    set parent_name ""
 	    set parent_id ""
 	    db_0or1row parent_info "
-		select	acs_object__name(object_id) as parent_name,
-			object_id as parent_id,
-			(select min(url) from im_biz_object_urls where object_type = 'im_forum_topic' and url_type = 'view') as parent_url,
-			(select min(url) from im_biz_object_urls where object_type = :object_type and url_type = 'view') as object_url,
-
-		from	im_forum_topics
+		select	acs_object__name(ft.object_id) as parent_name,
+			ft.object_id as parent_id,
+			(	select	min(url) from im_biz_object_urls 
+				where	object_type = (select object_type from acs_objects where object_id = ft.object_id) and 
+					url_type = 'view'
+			) as parent_url,
+			(	select	min(url) from im_biz_object_urls
+				where	object_type = :object_type and url_type = 'view'
+			) as object_url
+		from	im_forum_topics ft
 		where	topic_id = :object_id
 	    "
 	    set parent_html "<font>[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: <a href=\"$parent_url$parent_id\">$parent_name</a></font><br>\n"
@@ -814,7 +818,6 @@ db_foreach full_text_query $sql {
 	    }
 	    append result_html "
 	      <tr>
-                <td>object_type=$object_type, url=$url</td>
 		<td>
 		  $object_type_pretty_name: $name_link<br>
 		  $parent_html

@@ -16,14 +16,14 @@ However, you need to instruct the search engine how to search:
 
 &lt;H3&gt;Examples&lt;/h3&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;b&gt;'project &amp; open'&lt;/b&gt;:&lt;br&gt;Searches for all objects that contain both 'project' and 'open'.&lt;br&gt;&amp;nbsp;
-&lt;li&gt;&lt;b&gt;'project | open'&lt;/b&gt;:&lt;br&gt;Searches for all objects that contain either 'project' or 'open'.&lt;br&gt;&amp;nbsp;
+&lt;li&gt;&lt;b&gt;&#39;project &amp; open&#39;&lt;/b&gt;:&lt;br&gt;Searches for all objects that contain both &#39;project&#39; and &#39;open&#39;.&lt;br&gt;&amp;nbsp;
+&lt;li&gt;&lt;b&gt;&#39;project | open&#39;&lt;/b&gt;:&lt;br&gt;Searches for all objects that contain either &#39;project&#39; or &#39;open&#39;.&lt;br&gt;&amp;nbsp;
 &lt;/ul&gt;
 
 </msg>
   <msg key="Include_Deleted">Include Deleted</msg>
   <msg key="lt_Make_sure_all_words_a">Make sure all words are spelled correctly.</msg>
-  <msg key="lt_No_pages_were_found_c">No pages were found for this query: &quot;</msg>
+  <msg key="lt_No_pages_were_found_c">No pages were found for this query: &#34;</msg>
   <msg key="lt_Try_different_keyword">Try different keywords.</msg>
   <msg key="lt_Try_more_general_keyw">Try more general keywords.</msg>
   <msg key="Next">Next</msg>
@@ -36,7 +36,7 @@ However, you need to instruct the search engine how to search:
   <msg key="Search">Search</msg>
   <msg key="Search_Engine">Search Engine</msg>
   <msg key="Search_for_sepcific_object_types">Search for specific object types:</msg>
-  <msg key="Search_Results_for_query">Search Results for '%q%'</msg>
+  <msg key="Search_Results_for_query">Search Results for &#39;%q%&#39;</msg>
   <msg key="Search_took">Search took</msg>
   <msg key="seconds">seconds</msg>
   <msg key="Suggestions">Suggestions</msg>

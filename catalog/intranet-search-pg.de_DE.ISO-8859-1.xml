@@ -15,8 +15,8 @@ Sie müssen der Suchemaschine jedoch sagen, wie sie suchen soll:
 
 &amp;lt;H3&amp;gt;Beispiele&amp;lt;/h3&amp;gt;
 &amp;lt;ul&amp;gt;
-&amp;lt;li&amp;gt;&amp;lt;b&amp;gt;'Projekt &amp;amp; offen'&amp;lt;/b&amp;gt;:&amp;lt;br&amp;gt;Es werden alle Objekte gesucht, die 'Projekt' und 'offen' enthalten.&amp;lt;br&amp;gt;&amp;amp;nbsp;
-&amp;lt;li&amp;gt;&amp;lt;b&amp;gt;'Projekt | offen'&amp;lt;/b&amp;gt;:&amp;lt;br&amp;gt;Es werden alle Objekte gesucht, die entweder 'Projekt' oder 'offen' enthalten.&amp;lt;br&amp;gt;&amp;amp;nbsp;
+&amp;lt;li&amp;gt;&amp;lt;b&amp;gt;&#39;Projekt &amp;amp; offen&#39;&amp;lt;/b&amp;gt;:&amp;lt;br&amp;gt;Es werden alle Objekte gesucht, die &#39;Projekt&#39; und &#39;offen&#39; enthalten.&amp;lt;br&amp;gt;&amp;amp;nbsp;
+&amp;lt;li&amp;gt;&amp;lt;b&amp;gt;&#39;Projekt | offen&#39;&amp;lt;/b&amp;gt;:&amp;lt;br&amp;gt;Es werden alle Objekte gesucht, die entweder &#39;Projekt&#39; oder &#39;offen&#39; enthalten.&amp;lt;br&amp;gt;&amp;amp;nbsp;
 &amp;lt;/ul&amp;gt;
 
 </msg>
@@ -34,8 +34,8 @@ Sie müssen der Suchemaschine jedoch sagen, wie sie suchen soll:
   <msg key="Results">Ergebnisse</msg>
   <msg key="Search">Suche</msg>
   <msg key="Search_Engine">Suchmaschine</msg>
-  <msg key="Search_for_sepcific_object_types">Es werden bestimmte Objekttypen gesucht:</msg>
-  <msg key="Search_Results_for_query">Suchergebnisse für '%q%'</msg>
+  <msg key="Search_for_sepcific_object_types">Nach bestimmten Objekttypen suchen:</msg>
+  <msg key="Search_Results_for_query">Suchergebnisse für &#39;%q%&#39;</msg>
   <msg key="Search_took">Die Suche dauerte</msg>
   <msg key="seconds">Sekunden</msg>
   <msg key="Suggestions">Vorschläge</msg>

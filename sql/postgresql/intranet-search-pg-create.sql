@@ -345,7 +345,6 @@ begin
 end;$$ language 'plpgsql';
 
 
-
 create or replace function im_search_update (integer, varchar, integer, varchar)
 returns integer as $$
 declare

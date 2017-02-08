@@ -1,4 +1,4 @@
-<master>
+<master src="/packages/intranet-core/www/master">
 <property name="doc(title)">#intranet-search-pg.Search#</property>
 <property name="context">#intranet-search-pg.Search#</property>
 

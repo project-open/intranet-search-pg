@@ -489,7 +489,7 @@ begin
 			aa.object_type = 'im_project' and
 			a.include_in_search_p = 't'
 	LOOP
-v_sql := v_sql||' || '' '' ||coalesce('||row.deref_plpgsql_function||'('||row.attribute_name||'),0::varchar) ';
+		v_sql := v_sql||' || '' '' ||coalesce('||row.deref_plpgsql_function||'('||row.attribute_name||'),0::varchar) ';
 	END LOOP;
 
 	v_sql := 'select ' || v_sql || ' as value from im_projects where project_id = ' || new.project_id;
@@ -502,11 +502,28 @@ v_sql := v_sql||' || '' '' ||coalesce('||row.deref_plpgsql_function||'('||row.at
 	return new;
 end;$$ language 'plpgsql';
 
+
 CREATE TRIGGER im_projects_tsearch_tr 
-AFTER INSERT or UPDATE
-ON im_projects
-FOR EACH ROW 
-EXECUTE PROCEDURE im_projects_tsearch();
+AFTER INSERT or UPDATE ON im_projects
+FOR EACH ROW EXECUTE PROCEDURE im_projects_tsearch();
+
+
+-- update im_projects set project_type_id = project_type_id;
+create or replace function inline_0 ()
+returns integer as $body$
+declare
+	row		RECORD;
+begin
+	FOR row IN select project_id from im_projects order by project_id
+	LOOP update im_projects set project_nr = project_nr where project_id = row.project_id;
+	END LOOP;
+
+	return 0;
+end;$body$ language 'plpgsql';
+select inline_0 ();
+drop function inline_0 ();
+
+
 
 
 
@@ -533,19 +550,30 @@ begin
 end;$$ language 'plpgsql';
 
 CREATE TRIGGER im_companies_tsearch_tr 
-AFTER INSERT or UPDATE
-ON im_companies
-FOR EACH ROW 
-EXECUTE PROCEDURE im_companies_tsearch();
+AFTER INSERT or UPDATE ON im_companies
+FOR EACH ROW EXECUTE PROCEDURE im_companies_tsearch();
+
+-- re-index companies
+create or replace function inline_0 ()
+returns integer as $body$
+declare
+	row		RECORD;
+begin
+	FOR row IN select company_id from im_companies order by company_id
+	LOOP update im_companies set company_path = company_path where company_id = row.company_id;
+	END LOOP;
+
+	return 0;
+end;$body$ language 'plpgsql';
+select inline_0 ();
+drop function inline_0 ();
 
 
 
 
 -----------------------------------------------------------
--- person
-
-insert into im_search_object_types values (1,'user',5);
-
+-- person and im_employee
+--
 create or replace function persons_tsearch () 
 returns trigger as $$
 declare
@@ -612,17 +640,37 @@ begin
 end;$$ language 'plpgsql';
 
 
-CREATE TRIGGER persons_tsearch_tr 
-AFTER INSERT or UPDATE ON persons
-FOR EACH ROW EXECUTE PROCEDURE persons_tsearch();
 
+create or replace function inline_0 ()
+returns integer as $body$
+declare
+	v_count		integer;
+	row		RECORD;
+begin
+	-- Check if the table exists
+	select	count(*) into v_count from user_tab_columns
+	where	lower(table_name) = 'im_employees';
+	if v_count = 0 then return 1; end if;
+
+	insert into im_search_object_types values (1,'user',5);
+
+	CREATE TRIGGER persons_tsearch_tr 
+	AFTER INSERT or UPDATE ON persons
+	FOR EACH ROW EXECUTE PROCEDURE persons_tsearch();
+
+	FOR row IN select person_id from persons order by person_id
+	LOOP update persons set first_names = first_names where person_id = row.person_id;
+	END LOOP;
+
+	return 0;
+end;$body$ language 'plpgsql';
+select inline_0 ();
+drop function inline_0 ();
 
 
 
 -----------------------------------------------------------
 -- im_forum_topics
-
-insert into im_search_object_types values (2,'im_forum_topic',0.5);
 
 
 create or replace function im_forum_topics_tsearch () 
@@ -648,11 +696,33 @@ begin
 	return new;
 end;$$ language 'plpgsql';
 
-CREATE TRIGGER im_forum_topics_tsearch_tr 
-AFTER INSERT or UPDATE
-ON im_forum_topics
-FOR EACH ROW 
-EXECUTE PROCEDURE im_forum_topics_tsearch();
+
+create or replace function inline_0 ()
+returns integer as $body$
+declare
+	v_count		integer;
+	row		RECORD;
+begin
+	-- Check if the table exists
+	select	count(*) into v_count from user_tab_columns
+	where	lower(table_name) = 'im_forum_topics';
+	if v_count = 0 then return 1; end if;
+
+	insert into im_search_object_types values (2,'im_forum_topic',0.5);
+
+	CREATE TRIGGER im_forum_topics_tsearch_tr 
+	AFTER INSERT or UPDATE ON im_forum_topics
+	FOR EACH ROW EXECUTE PROCEDURE im_forum_topics_tsearch();
+
+	-- Update existing objects
+	FOR row IN select topic_id from im_forum_topics order by topic_id
+	LOOP update im_forum_topics set scope = scope where topic_id = row.topic_id;
+	END LOOP;
+
+	return 0;
+end;$body$ language 'plpgsql';
+select inline_0 ();
+drop function inline_0 ();
 
 
 
@@ -663,8 +733,6 @@ EXECUTE PROCEDURE im_forum_topics_tsearch();
 -- We are going for Invoice instead of im_costs, because of
 -- performance reasons. There many be many cost items, but
 -- they don't usually interest us very much.
-
-insert into im_search_object_types values (4,'im_invoice',1);
 
 create or replace function im_invoice_tsearch ()
 returns trigger as $$
@@ -689,11 +757,33 @@ begin
 	return new;
 end;$$ language 'plpgsql';
 
-CREATE TRIGGER im_invoices_tsearch_tr
-AFTER INSERT or UPDATE
-ON im_invoices
-FOR EACH ROW
-EXECUTE PROCEDURE im_invoice_tsearch();
+
+create or replace function inline_0 ()
+returns integer as $body$
+declare
+	v_count		integer;
+	row		RECORD;
+begin
+	-- Check if the table exists
+	select	count(*) into v_count from user_tab_columns
+	where	lower(table_name) = 'im_invoices';
+	if v_count = 0 then return 1; end if;
+
+	insert into im_search_object_types values (4,'im_invoice',1);
+
+	CREATE TRIGGER im_invoices_tsearch_tr
+	AFTER INSERT or UPDATE ON im_invoices
+	FOR EACH ROW EXECUTE PROCEDURE im_invoice_tsearch();
+
+	FOR row IN select invoice_id from im_invoices order by invoice_id
+	LOOP update im_invoices set invoice_nr = invoice_nr where invoice_id = row.invoice_id;
+	END LOOP;
+
+	return 0;
+end;$body$ language 'plpgsql';
+select inline_0 ();
+drop function inline_0 ();
+
 
 
 
@@ -701,8 +791,6 @@ EXECUTE PROCEDURE im_invoice_tsearch();
 -----------------------------------------------------------
 -- Tickets
 
-
-insert into im_search_object_types values (8,'im_ticket',0.7);
 
 create or replace function im_tickets_tsearch ()
 returns trigger as $$
@@ -728,20 +816,107 @@ begin
 end;$$ language 'plpgsql';
 
 
-CREATE TRIGGER im_tickets_tsearch_tr
-AFTER INSERT or UPDATE
-ON im_tickets
-FOR EACH ROW
-EXECUTE PROCEDURE im_tickets_tsearch();
+create or replace function inline_0 ()
+returns integer as $body$
+declare
+	v_count		integer;
+	row		RECORD;
+begin
+	-- Check if the table exists
+	select	count(*) into v_count from user_tab_columns
+	where	lower(table_name) = 'im_employees';
+	if v_count = 0 then return 1; end if;
+
+	insert into im_search_object_types values (8,'im_ticket',0.7);
+
+	CREATE TRIGGER im_tickets_tsearch_tr
+	AFTER INSERT or UPDATE ON im_tickets
+	FOR EACH ROW EXECUTE PROCEDURE im_tickets_tsearch();
+
+	FOR row IN select ticket_id from im_tickets order by ticket_id
+	LOOP update im_tickets set ticket_type_id = ticket_type_id where ticket_id = row.ticket_id;
+	END LOOP;
+
+	return 0;
+end;$body$ language 'plpgsql';
+select inline_0 ();
+drop function inline_0 ();
+
 
 
 
 -----------------------------------------------------------
--- im_fs_files
+-- Conf_Items
 
-insert into im_search_object_types values (6,'im_fs_file',0.1);
 
--- Files are managed by the intranet-search-pg-files package
+create or replace function im_conf_items_tsearch ()
+returns trigger as $$
+declare
+	v_string	varchar;
+begin
+	select	coalesce(c.conf_item_code, '') || ' ' ||
+		coalesce(c.conf_item_name, '') || ' ' ||
+		coalesce(c.conf_item_nr, '') || ' ' ||
+		coalesce(c.conf_item_version, '') || ' ' ||
+		coalesce(c.description, '') || ' ' ||
+		coalesce(c.ip_address, '') || ' ' ||
+		coalesce(c.note, '') || ' ' ||
+		coalesce(c.ocs_deviceid, '') || ' ' ||
+		coalesce(c.ocs_id, '') || ' ' ||
+		coalesce(c.ocs_username, '') || ' ' ||
+		coalesce(c.os_comments, '') || ' ' ||
+		coalesce(c.os_name, '') || ' ' ||
+		coalesce(c.os_version, '') || ' ' ||
+		coalesce(c.processor_text, '') || ' ' ||
+		coalesce(c.win_company, '') || ' ' ||
+		coalesce(c.win_owner, '') || ' ' ||
+		coalesce(c.win_product_id, '') || ' ' ||
+		coalesce(c.win_product_key, '') || ' ' ||
+		coalesce(c.win_userdomain, '') || ' ' ||
+		coalesce(c.win_workgroup, '')
+	into	v_string
+	from	im_conf_items c
+	where   c.conf_item_id = new.conf_item_id;
+
+	perform im_search_update(new.conf_item_id, 'im_conf_item', new.conf_item_id, v_string);
+
+	return new;
+end;$$ language 'plpgsql';
+
+
+
+
+create or replace function inline_0 ()
+returns integer as $body$
+declare
+	v_count		integer;
+	row		RECORD;
+begin
+	-- Check if the table exists
+	select	count(*) into v_count from user_tab_columns
+	where	lower(table_name) = 'im_conf_items';
+	if v_count = 0 then return 1; end if;
+
+	insert into im_search_object_types values (9, 'im_conf_item', 0.8);
+
+	-- Check if the trigger exists
+	select	count(*) into v_count from pg_trigger where tgname = 'im_conf_items_tsearch_tr';
+	IF v_count > 0 THEN drop trigger im_conf_items_tsearch_tr on im_conf_items; END IF;
+
+	CREATE TRIGGER im_conf_items_tsearch_tr
+	AFTER INSERT or UPDATE ON im_conf_items
+	FOR EACH ROW EXECUTE PROCEDURE im_conf_items_tsearch();
+
+	FOR row IN select conf_item_id from im_conf_items order by conf_item_id
+	LOOP update im_conf_items set conf_item_nr = conf_item_nr where conf_item_id = row.conf_item_id;
+	END LOOP;
+
+	return 0;
+end;$body$ language 'plpgsql';
+select inline_0 ();
+drop function inline_0 ();
+
+
 
 
 -----------------------------------------------------------
@@ -784,249 +959,6 @@ BEGIN
 
 	return v_name;
 end;$$ language 'plpgsql';
-
-
-
-
-
-
-
------------------------------------------------------------
--- Conf_Items
-
-insert into im_search_object_types values (9, 'im_conf_item', 0.8);
-
-
-
-create or replace function im_conf_items_tsearch ()
-returns trigger as $$
-declare
-	v_string	varchar;
-begin
-	select	coalesce(c.conf_item_code, '') || ' ' ||
-		coalesce(c.conf_item_name, '') || ' ' ||
-		coalesce(c.conf_item_nr, '') || ' ' ||
-		coalesce(c.conf_item_version, '') || ' ' ||
-		coalesce(c.description, '') || ' ' ||
-		coalesce(c.ip_address, '') || ' ' ||
-		coalesce(c.note, '') || ' ' ||
-		coalesce(c.ocs_deviceid, '') || ' ' ||
-		coalesce(c.ocs_id, '') || ' ' ||
-		coalesce(c.ocs_username, '') || ' ' ||
-		coalesce(c.os_comments, '') || ' ' ||
-		coalesce(c.os_name, '') || ' ' ||
-		coalesce(c.os_version, '') || ' ' ||
-		coalesce(c.processor_text, '') || ' ' ||
-		coalesce(c.win_company, '') || ' ' ||
-		coalesce(c.win_owner, '') || ' ' ||
-		coalesce(c.win_product_id, '') || ' ' ||
-		coalesce(c.win_product_key, '') || ' ' ||
-		coalesce(c.win_userdomain, '') || ' ' ||
-		coalesce(c.win_workgroup, '')
-	into	v_string
-	from	im_conf_items c
-	where   c.conf_item_id = new.conf_item_id;
-
-	perform im_search_update(new.conf_item_id, 'im_conf_item', new.conf_item_id, v_string);
-
-	return new;
-end;$$ language 'plpgsql';
-
-
-
-create or replace function inline_0 ()
-returns integer as $body$
-declare
-	v_count		integer;
-begin
-	-- Check if the table exists
-	select	count(*) into v_count from user_tab_columns
-	where	lower(table_name) = 'im_conf_items';
-	if v_count = 0 then return 1; end if;
-
-	-- Check if the trigger exists
-	select	count(*) into v_count from pg_trigger where tgname = 'im_conf_items_tsearch_tr';
-	IF v_count > 0 THEN
-		drop trigger im_conf_items_tsearch_tr on im_conf_items; 
-	END IF;
-
-	CREATE TRIGGER im_conf_items_tsearch_tr
-	AFTER INSERT or UPDATE
-	ON im_conf_items
-	FOR EACH ROW
-	EXECUTE PROCEDURE im_conf_items_tsearch();
-
-	return 0;
-end;$body$ language 'plpgsql';
-select inline_0 ();
-drop function inline_0 ();
-
-
-
-
-
-
------------------------------------------------------------
--- Index the existing business objects
-
-
-
--- update persons set first_names=first_names;
-create or replace function inline_0 ()
-returns integer as $body$
-declare
-	v_count		integer;
-	v_ctr		integer;
-	row		RECORD;
-begin
-	select count(*) into v_count from persons;
-	v_ctr := 0;
-	FOR row IN
-		select person_id from persons order by person_id
-	LOOP
-		RAISE NOTICE 'TSearch2: Updating person % of %: person_id=%', v_ctr, v_count, row.person_id;
-		update persons set first_names = first_names where person_id = row.person_id;
-		v_ctr := v_ctr + 1;
-	END LOOP;
-
-	return 0;
-end;$body$ language 'plpgsql';
-select inline_0 ();
-drop function inline_0 ();
-
-
-
--- update im_projects set project_type_id = project_type_id;
-create or replace function inline_0 ()
-returns integer as $body$
-declare
-	v_count		integer;
-	v_ctr		integer;
-	row		RECORD;
-begin
-	select count(*) into v_count from im_projects;
-	v_ctr := 0;
-	FOR row IN
-		select project_id from im_projects order by project_id
-	LOOP
-		RAISE NOTICE 'TSearch2: Updating project % of %: project_id=%', v_ctr, v_count, row.project_id;
-		update im_projects set project_nr = project_nr where project_id = row.project_id;
-		v_ctr := v_ctr + 1;
-	END LOOP;
-
-	return 0;
-end;$body$ language 'plpgsql';
-select inline_0 ();
-drop function inline_0 ();
-
-
-
-
--- update im_companies set company_type_id = company_type_id;
-create or replace function inline_0 ()
-returns integer as $body$
-declare
-	v_count		integer;
-	v_ctr		integer;
-	row		RECORD;
-begin
-	select count(*) into v_count from im_companies;
-	v_ctr := 0;
-	FOR row IN
-		select company_id from im_companies order by company_id
-	LOOP
-		RAISE NOTICE 'TSearch2: Updating company % of %: company_id=%', v_ctr, v_count, row.company_id;
-		update im_companies set company_path = company_path where company_id = row.company_id;
-		v_ctr := v_ctr + 1;
-	END LOOP;
-
-	return 0;
-end;$body$ language 'plpgsql';
-select inline_0 ();
-drop function inline_0 ();
-
-
-
-
-
--- update im_invoices set invoice_nr = invoice_nr;
-create or replace function inline_0 ()
-returns integer as $body$
-declare
-	v_count		integer;
-	v_ctr		integer;
-	row		RECORD;
-begin
-	select count(*) into v_count from im_invoices;
-	v_ctr := 0;
-	FOR row IN
-		select invoice_id from im_invoices order by invoice_id
-	LOOP
-		RAISE NOTICE 'TSearch2: Updating invoice % of %: invoice_id=%', v_ctr, v_count, row.invoice_id;
-		update im_invoices set invoice_nr = invoice_nr where invoice_id = row.invoice_id;
-		v_ctr := v_ctr + 1;
-	END LOOP;
-
-	return 0;
-end;$body$ language 'plpgsql';
-select inline_0 ();
-drop function inline_0 ();
-
-
-
-
--- update im_forum_topics set scope = scope;
-create or replace function inline_0 ()
-returns integer as $body$
-declare
-	v_count		integer;
-	v_ctr		integer;
-	row		RECORD;
-begin
-	select count(*) into v_count from im_forum_topics;
-	v_ctr := 0;
-	FOR row IN
-		select topic_id from im_forum_topics order by topic_id
-	LOOP
-		RAISE NOTICE 'TSearch2: Updating forum_topic % of %: forum_topic_id=%', v_ctr, v_count, row.topic_id;
-		update im_forum_topics set scope = scope where topic_id = row.topic_id;
-		v_ctr := v_ctr + 1;
-	END LOOP;
-
-	return 0;
-end;$body$ language 'plpgsql';
-select inline_0 ();
-drop function inline_0 ();
-
-
--- update im_conf_items set conf_item_nr = conf_item_nr;
-create or replace function inline_0 ()
-returns integer as $body$
-declare
-	v_count		integer;
-	v_ctr		integer;
-	row		RECORD;
-begin
-        -- Check if the table exists
-        select  count(*) into v_count from user_tab_columns
-        where   lower(table_name) = 'im_conf_items';
-        if v_count = 0 then return 1; end if;
-
-	select count(*) into v_count from im_conf_items;
-	v_ctr := 0;
-	FOR row IN
-		select conf_item_id from im_conf_items order by conf_item_id
-	LOOP
-		RAISE NOTICE 'TSearch2: Updating conf_item % of %: conf_item_id=%', v_ctr, v_count, row.conf_item_id;
-		update im_conf_items set conf_item_nr = conf_item_nr where conf_item_id = row.conf_item_id;
-		v_ctr := v_ctr + 1;
-	END LOOP;
-
-	return 0;
-end;$body$ language 'plpgsql';
-select inline_0 ();
-drop function inline_0 ();
-
 
 
 

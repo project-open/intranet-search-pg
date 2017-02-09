@@ -222,7 +222,7 @@ db_foreach object_type $sql {
     }
     regsub -all { } $object_type_pretty_name {_} object_type_pretty_name_sub
 
-    if { "im_invoice"==$object_type } {
+    if {"im_invoice" eq $object_type} {
 	set object_type_pretty_name  [lang::message::lookup "" intranet-cost.FinancialDocument "Financial Document"]
     } else {
 	set object_type_pretty_name [lang::message::lookup "" intranet-core.$object_type_pretty_name_sub $object_type_pretty_name]
@@ -500,6 +500,21 @@ if {[im_table_exists im_events]} {
     "
 }
 
+
+set invoice_union ""
+if {[im_table_exists im_invoices]} {
+    set invoice_union "
+		    UNION
+			select	invoice_id as object_id,
+				'im_invoice' as object_type,
+                                c.cost_type_id as object_sub_type_id
+			from	im_invoices i,
+				im_costs c
+			where	i.invoice_id = c.cost_id
+				$invoice_perm_sql
+    "
+}
+
 set sql "
 	select
 		acs_object__name(so.object_id) as name,
@@ -536,14 +551,7 @@ set sql "
 			from	im_companies c
 			where	1=1
 				$company_perm_sql
-		    UNION
-			select	invoice_id as object_id,
-				'im_invoice' as object_type,
-                                c.cost_type_id as object_sub_type_id
-			from	im_invoices i,
-				im_costs c
-			where	i.invoice_id = c.cost_id
-				$invoice_perm_sql
+		    $invoice_union
 		    UNION
 			select	person_id as object_id,
 				'user' as object_type,

@@ -7,23 +7,23 @@
 Cependant, vous devez dire à votre moteur de recherche comment chercher:
 &amp;lt;p&amp;gt;
 &amp;lt;ul&amp;gt;
-&amp;lt;li&amp;gt;Mot clé 1 &amp;lt;b&amp;gt;&amp;amp;&amp;lt;/b&amp;gt; Keyword2:&amp;lt;br&amp;gt;Recherche d'objets comportant les deux mots clé.&amp;lt;br&amp;gt;&amp;amp;nbsp;
-&amp;lt;li&amp;gt;Keyword1 &amp;lt;b&amp;gt;|&amp;lt;/b&amp;gt; Keyword2:&amp;lt;br&amp;gt;SRecherche d'objets comportant l'un des deux mots clé.&amp;lt;br&amp;gt;&amp;amp;nbsp;
+&amp;lt;li&amp;gt;Mot clé 1 &amp;lt;b&amp;gt;&amp;amp;&amp;lt;/b&amp;gt; Keyword2:&amp;lt;br&amp;gt;Recherche d&#39;objets comportant les deux mots clé.&amp;lt;br&amp;gt;&amp;amp;nbsp;
+&amp;lt;li&amp;gt;Keyword1 &amp;lt;b&amp;gt;|&amp;lt;/b&amp;gt; Keyword2:&amp;lt;br&amp;gt;SRecherche d&#39;objets comportant l&#39;un des deux mots clé.&amp;lt;br&amp;gt;&amp;amp;nbsp;
 &amp;lt;li&amp;gt;&amp;lt;b&amp;gt;!&amp;lt;/b&amp;gt;Keyword:&amp;lt;br&amp;gt;Recherche de tout objet ne comportant AUCUN mot clé.&amp;lt;br&amp;gt;&amp;amp;nbsp;
 &amp;lt;li&amp;gt;&amp;lt;b&amp;gt;(&amp;lt;/b&amp;gt;Query&amp;lt;b&amp;gt;)&amp;lt;/b&amp;gt;:&amp;lt;br&amp;gt;Vouys pouvez utiliser des parenthèses pour regrouper des requêtes.&amp;lt;br&amp;gt;&amp;amp;nbsp;
 &amp;lt;/ul&amp;gt;
 
 &amp;lt;H3&amp;gt;Examples&amp;lt;/h3&amp;gt;
 &amp;lt;ul&amp;gt;
-&amp;lt;li&amp;gt;&amp;lt;b&amp;gt;'project &amp;amp; open'&amp;lt;/b&amp;gt;:&amp;lt;br&amp;gt;Recherche pour tous les objets comportant 'project' et 'open'.&amp;lt;br&amp;gt;&amp;amp;nbsp;
-&amp;lt;li&amp;gt;&amp;lt;b&amp;gt;'project | open'&amp;lt;/b&amp;gt;:&amp;lt;br&amp;gt;Recherche de tous les projets comportant 'project' ou 'open'.&amp;lt;br&amp;gt;&amp;amp;nbsp;
+&amp;lt;li&amp;gt;&amp;lt;b&amp;gt;&#39;project &amp;amp; open&#39;&amp;lt;/b&amp;gt;:&amp;lt;br&amp;gt;Recherche pour tous les objets comportant &#39;project&#39; et &#39;open&#39;.&amp;lt;br&amp;gt;&amp;amp;nbsp;
+&amp;lt;li&amp;gt;&amp;lt;b&amp;gt;&#39;project | open&#39;&amp;lt;/b&amp;gt;:&amp;lt;br&amp;gt;Recherche de tous les projets comportant &#39;project&#39; ou &#39;open&#39;.&amp;lt;br&amp;gt;&amp;amp;nbsp;
 &amp;lt;/ul&amp;gt;
 
 </msg>
   <msg key="Include_Deleted">Inclure les supprimé</msg>
   <msg key="lt_Make_sure_all_words_a">Vérifiez que tous les mots sont correctement orthographiés.</msg>
-  <msg key="lt_No_pages_were_found_c">Aucune page n'a été trouvée pour cette requête : &amp;quot;</msg>
-  <msg key="lt_Try_different_keyword">Essayez avec d'autres mots clé.</msg>
+  <msg key="lt_No_pages_were_found_c">Aucune page n&#39;a été trouvée pour cette requête : &amp;quot;</msg>
+  <msg key="lt_Try_different_keyword">Essayez avec d&#39;autres mots clé.</msg>
   <msg key="lt_Try_more_general_keyw">Essayez avec des mots clé plus généraux.</msg>
   <msg key="Next">Suivant</msg>
   <msg key="of_about">de environ</msg>
@@ -34,8 +34,8 @@ Cependant, vous devez dire à votre moteur de recherche comment chercher:
   <msg key="Results">Résultats </msg>
   <msg key="Search">Recherche</msg>
   <msg key="Search_Engine">Moteur de recherche</msg>
-  <msg key="Search_for_sepcific_object_types">Recherche pour des types d'objets spécifiques :</msg>
-  <msg key="Search_Results_for_query">Résultats de la recherche pour '%q%'</msg>
+  <msg key="Search_for_sepcific_object_types">Recherche pour des types d&#39;objets spécifiques :</msg>
+  <msg key="Search_Results_for_query">Résultats de la recherche pour &#39;%q%&#39;</msg>
   <msg key="Search_took">La recherche a duré</msg>
   <msg key="seconds">secondes</msg>
   <msg key="Suggestions">Suggestions</msg>

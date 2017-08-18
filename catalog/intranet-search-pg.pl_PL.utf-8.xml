@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<message_catalog package_key="intranet-search-pg" locale="pl_PL" charset="utf-8">
+
+  <msg key="Search_Engine">Wyszukiwarka</msg>
+</message_catalog>

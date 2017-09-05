@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <message_catalog package_key="intranet-search-pg" locale="pl_PL" charset="utf-8">
 
+  <msg key="Advanced_Search">Wyszukiwanie zaawansowane</msg>
+  <msg key="Bad_Query">Złe zapytanie</msg>
+  <msg key="Bad_Query_Msg">Silnik wyszukiwania ]po[ może przetwarzać skomplikowane zapytania z więcej niż jednym wyrazem. &lt;br/&gt; Niemniej jednak musisz poinstruować wyszukiwarkę jak ma szukać: &lt;p&gt;&lt;ul&gt;&lt;li&gt;Słowo1 &lt;b&gt;&amp;&lt;/b&gt; Słowo2&lt;br/&gt;Szuka obiektów zawierających oba słowa&lt;br/&gt;&lt;li&gt;Słowo1 &lt;b&gt;|&lt;/b&gt; Słowo2: &lt;br/&gt;Wyszukuje obiekty zawierające przynajmniej jedno z podanych słów&lt;br/&gt;&lt;li&gt;&lt;b&gt;!&lt;/b&gt;Słowo:&lt;br/&gt;Wyszukuje obiekty, które NIE ZAWIERAJĄ tego słowa&lt;br/&gt;&lt;li&gt;&lt;b&gt;(&lt;/b&gt;Zapytanie&lt;b&gt;)&lt;/b&gt;:Możesz użyć nawiasów do grupowania zapytań&lt;br/&gt;&lt;ul&gt;&lt;h3&gt;Przykłady&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;project &amp; open&gt;/b&gt;:&lt;br/&gt;Wyszukuje wszystkie obiekty zawierające &#34;project&#34; i &#34;open&#34;.&lt;br/&gt;&lt;li&gt;&lt;b&gt;project | open&lt;/b&gt;:&lt;br/&gt;Wyszukuje wszystkie obiekty zawierające albo &#34;project&#34;, albo &#34;open&#34;, albo oba.&lt;br/&gt;&lt;/ul&gt;</msg>
+  <msg key="Include_Deleted">Uwzględnij usunięte</msg>
+  <msg key="lt_Make_sure_all_words_a">Upewnij się, że słowa są napisane poprawnie</msg>
+  <msg key="lt_No_pages_were_found_c">To zapytanie nie zwróciło żadnych stron: &#34;</msg>
+  <msg key="lt_Try_different_keyword">Spróbuj użyć innych słów.</msg>
+  <msg key="lt_Try_more_general_keyw">Spróbuj użyć bardziej ogólnych słów.</msg>
+  <msg key="Next">Następnu</msg>
+  <msg key="of_about">około</msg>
+  <msg key="of_more_then">więcej niż</msg>
+  <msg key="Parent">Rodzic</msg>
+  <msg key="Previous">Poprzedni</msg>
+  <msg key="Result_page">Strona wyników</msg>
+  <msg key="Results">Wyniki</msg>
+  <msg key="Search">Szukaj</msg>
   <msg key="Search_Engine">Wyszukiwarka</msg>
+  <msg key="Search_for_sepcific_object_types">Wyszukaj konkretne typy obiektów:</msg>
+  <msg key="Search_Results_for_query">Wyniki wyszukiwania dla &#34;%q%&#34;</msg>
+  <msg key="Search_took">Wyszukiwanie zajęło</msg>
+  <msg key="seconds">sekund</msg>
+  <msg key="Suggestions">Sugestie</msg>
+  <msg key="Try_fewer_keywords">Spróbuj użyć mniej słów.</msg>
 </message_catalog>

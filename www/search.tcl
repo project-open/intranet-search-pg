@@ -662,7 +662,7 @@ db_foreach full_text_query $sql {
 				  where	r.object_id_two = :current_user_id
 					and r.object_id_one = :biz_object_id
 					and r.rel_id = m.rel_id
-					and m.object_role_id in (1301, 1302, 1303)
+					and m.object_role_id in (1301, 1302, 1303, 1309)
 				)::integer\n"
 	    if {$user_is_admin_p} { set object_admin_sql "1::integer\n" }
 

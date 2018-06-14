@@ -45,6 +45,7 @@ create table im_search_object_types (
 -- 8 | im_ticket	| 0.7
 -- 9 | im_conf_item	| 0.8
 --10 | im_event		| 0.6
+--11 | im_budget_item	| 0.9
 
 
 -- Create "default" configuration

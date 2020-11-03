@@ -2,6 +2,12 @@
 <property name="doc(title)">@page_title;literal@</property>
 <property name="context">@context;literal@</property>
 
+<script type="text/javascript" <if @::__csp_nonce@ not nil>nonce="@::__csp_nonce;literal@"</if>>
+window.addEventListener('load', function() { 
+     document.getElementById('list_check_all_search').addEventListener('click', function() { acs_ListCheckAll('type', this.checked) });
+});
+</script>
+
 <br>
 <form method=GET action=search>
 
@@ -23,7 +29,7 @@
 	  <td align="center">
 		<table cellspacing="0" cellpadding="0">
 		<tr class=rowtitle>
-		<td class=rowtitle><input type="checkbox" name="_dummy" onclick="acs_ListCheckAll('type',this.checked)" checked></td>
+		<td class=rowtitle><input id=list_check_all_search type="checkbox" name="_dummy" checked></td>
 		<td class=rowtitle><%= [lang::message::lookup "" intranet-search-pg.Search_Object_Type "Search Object Type"] %>
 		</tr>
 		@objects_html;noquote@

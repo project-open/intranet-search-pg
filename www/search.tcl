@@ -98,7 +98,7 @@ if {[lsearch im_document $type] >= 0} {
 # Normalize query - lowercase and without double quotes
 set q [string tolower $q]
 regsub -all {["']} $q {} q
-
+#"
 
 # Remove accents and other special characters from
 # search query. Also remove "@", "-" and "." and 
@@ -184,7 +184,7 @@ set error_message "
 if {$nquery > 1} {
     
     if {[catch {
-	db_string test_query "select to_tsquery('default',:q)"
+	db_string test_query "select to_tsquery('default'::regconfig, :q)"
     } errmsg]} {
 	set result_html $error_message
 	ad_return_template
@@ -571,7 +571,7 @@ set sql "
 		) readable_biz_objs
 	where	so.object_type_id = sot.object_type_id and
 		so.biz_object_id = readable_biz_objs.object_id and
-		so.fti @@ to_tsquery('default',:q)
+		so.fti @@ to_tsquery('default'::regconfig, :q)
 	order by
 		(ts_rank(so.fti, :q::tsquery) * sot.rel_weight) DESC
 	offset :offset

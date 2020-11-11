@@ -348,7 +348,7 @@ begin
 		update im_search_objects set
 			object_type_id	= v_object_type_id,
 			biz_object_id	= p_biz_object_id,
-			fti		= to_tsvector('default', norm_text(v_text))
+			fti		= to_tsvector('default'::regconfig, norm_text(v_text))
 		where
 			object_id	= p_object_id
 			and object_type_id = v_object_type_id;
@@ -368,7 +368,7 @@ begin
 				p_object_id,
 				v_object_type_id,
 				p_biz_object_id,
-				to_tsvector('default', norm_text(v_text))
+				to_tsvector('default'::regconfig, norm_text(v_text))
 			);
 		end if;
 	end if;

@@ -118,9 +118,9 @@ ad_proc -public tsearch2::index {
 	db_dml index "
             insert into txt (object_id,fti)
             values ( :object_id,
-                     setweight(to_tsvector('default',coalesce(:title,'')),'A')
-                   ||setweight(to_tsvector('default',coalesce(:keywords,'')),'B')
-                   ||to_tsvector('default',coalesce(:txt,'')))"
+                     setweight(to_tsvector('default'::regconfig, coalesce(:title,'')),'A')
+                   ||setweight(to_tsvector('default'::regconfig, coalesce(:keywords,'')),'B')
+                   ||to_tsvector('default'::regconfig, coalesce(:txt,'')))"
     } else {
 	tsearch2::update_index $object_id $txt $title $keywords
     }
@@ -165,9 +165,9 @@ ad_proc -public tsearch2::update_index {
     } else {
 	db_dml update_index "
             update txt set fti =
-                     setweight(to_tsvector('default',coalesce(:title,'')),'A')
-                   ||setweight(to_tsvector('default',coalesce(:keywords,'')),'B')
-                   ||to_tsvector('default',coalesce(:txt,''))
+                     setweight(to_tsvector('default'::regconfig, coalesce(:title,'')),'A')
+                   ||setweight(to_tsvector('default'::regconfig, coalesce(:keywords,'')),'B')
+                   ||to_tsvector('default'::regconfig, coalesce(:txt,''))
             where object_id=:object_id
         "
     }

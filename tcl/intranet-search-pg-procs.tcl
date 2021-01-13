@@ -218,13 +218,13 @@ ad_proc -public tsearch2::search {
     if {[string is integer $offset]} {
 	set offset_clause " offset :offset "
     }
-    set query_text "select object_id from txt where fti @@ to_tsquery('default':regconfig, :query) and exists (select 1
+    set query_text "select object_id from txt where fti @@ to_tsquery('default'::regconfig, :query) and exists (select 1
                    from acs_object_party_privilege_map m
                    where m.object_id = txt.object_id
                      and m.party_id = :user_id
-                     and m.privilege = 'read') order by ts_rank(fti,to_tsquery('default':regconfig, :query)) desc  ${limit_clause} ${offset_clause}"
+                     and m.privilege = 'read') order by ts_rank(fti,to_tsquery('default'::regconfig, :query)) desc  ${limit_clause} ${offset_clause}"
     set results_ids [db_list search $query_text]
-    set count [db_string count "select count(*) from txt where fti @@ to_tsquery('default':regconfig, :query)  and exists
+    set count [db_string count "select count(*) from txt where fti @@ to_tsquery('default'::regconfig, :query)  and exists
                   (select 1 from acs_object_party_privilege_map m
                    where m.object_id = txt.object_id
                      and m.party_id = :user_id
@@ -253,7 +253,7 @@ ad_proc -public tsearch2::summary {
     @error
 } {
     set query [tsearch2::build_query -query $query]
-   return [db_string summary "select ts_headline('default',:txt,to_tsquery('default':regconfig, :query))"]
+   return [db_string summary "select ts_headline('default',:txt,to_tsquery('default'::regconfig, :query))"]
 }
 
 ad_proc -public tsearch2::driver_info {

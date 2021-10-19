@@ -271,12 +271,12 @@ set company_perm_sql "
 			                acs_rels r
 			        where	r.object_id_one = c.company_id
 			                and r.object_id_two = :current_user_id
-					and c.company_status_id not in ([im_company_status_deleted])
+					and c.company_status_id not in ([join [im_sub_categories [im_company_status_deleted]] ","])
 			)"
 
 if {[im_permission $current_user_id "view_companies_all"]} {
         set company_perm_sql "
-			and c.company_status_id not in ([im_company_status_deleted])
+			and c.company_status_id not in ([join [im_sub_categories [im_company_status_deleted]] ","])
 	"
 }
 

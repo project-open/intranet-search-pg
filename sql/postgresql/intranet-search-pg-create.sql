@@ -976,7 +976,7 @@ begin
 	FOR row IN
 		select item_id from cr_items order by item_id
 	LOOP
-		RAISE NOTICE 'TSearch2: Updating conf_item % of %: item_id=%', v_ctr, v_count, row.item_id;
+		RAISE NOTICE 'TSearch2: Updating cr_item % of %: item_id=%', v_ctr, v_count, row.item_id;
 		update cr_items set locale = locale where item_id = row.item_id;
 		v_ctr := v_ctr + 1;
 	END LOOP;

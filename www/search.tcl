@@ -103,7 +103,7 @@ regsub -all {["']} $q {} q
 # Remove accents and other special characters from
 # search query. Also remove "@", "-" and "." and 
 # convert them to spaces
-set q [db_exec_plsql normalize "select norm_text(:q)"]
+# set q [db_exec_plsql normalize "select norm_text(:q)"]
 set query $q
 #set q [join $q " & "]
 
@@ -152,9 +152,19 @@ set error_message "
 	<H2>[lang::message::lookup "" intranet-search-pg.Bad_Query "Bad Query"]</h2>
 	[lang::message::lookup "" intranet-search-pg.Bad_Query_Msg "
         The &\#93;po&\#91; search engine is capable of processing complex queries 
-	with more then one word. <br>
+	with more then one word and using wildcards.<br>
         However, you need to instruct the search engine how to search:
-        <p>
+        <h3>Wildcards</h3>
+        <ul>
+          <li>Keyword<b>:*</b>:<br>
+              A keyword followed by a colon and an asterisk (<b>:*</b>) will find any string starting with keyword.
+              <br>&nbsp;
+          <li><b>:*</b>Keyword:<br>
+              A keyword preceeded by a colon and an asterisk (<b>:*</b>) will find any string ending with keyword.
+              <br>&nbsp;
+        </ul>        
+
+        <h3>Conjunctions</h3>
         <ul>
           <li>Keyword1 <b>&</b> Keyword2:<br>
               Searches for objects that contain both keywords.<br>&nbsp;
@@ -446,6 +456,8 @@ set forum_perm_sql ""
 
 
 
+
+
 # -----------------------------------------------------------
 # Build a suitable select for object types
 # -----------------------------------------------------------
@@ -578,84 +590,87 @@ set sql "
 	limit :limit
 "
 
+
 set count 0
-db_foreach full_text_query $sql {
 
-    incr count
+if {[catch {
+    db_foreach full_text_query $sql {
 
-    # Localize the object type
-    regsub -all { } $object_type_pretty_name {_} object_type_pretty_name_sub
-    regsub -all { } $biz_object_type_pretty_name {_} biz_object_type_pretty_name_sub
-    set object_type_pretty_name [lang::message::lookup "" intranet-core.$object_type_pretty_name_sub $object_type_pretty_name]
-    set biz_object_type_pretty_name [lang::message::lookup "" intranet-core.$biz_object_type_pretty_name_sub $biz_object_type_pretty_name]
+	incr count
+
+	# Localize the object type
+	regsub -all { } $object_type_pretty_name {_} object_type_pretty_name_sub
+	regsub -all { } $biz_object_type_pretty_name {_} biz_object_type_pretty_name_sub
+	set object_type_pretty_name [lang::message::lookup "" intranet-core.$object_type_pretty_name_sub $object_type_pretty_name]
+	set biz_object_type_pretty_name [lang::message::lookup "" intranet-core.$biz_object_type_pretty_name_sub $biz_object_type_pretty_name]
 
 
-    # Skip further permissions checking if we reach the
-    # maximum number of records. However, keep on counting
-    # until "limit" in order to get an idea of the total
-    # number of results
-    if {$count > $results_per_page} {
-	continue
-    }
-
-    set name_link $name
-    if {"" != $object_url} {
-	set name_link "<a href=\"$object_url$object_id\">$name</a>\n"
-    }
-    
-    set text [im_tsvector_to_headline $full_text_index]
-    set headline [db_string headline "select ts_headline(:text, :q::tsquery)" -default ""]
-
-    # Final permission test: Make sure no object slips through security
-    # even if it's kind of slow to do this iteratively...
-    switch $object_type {
-	im_project { 
-	    im_project_permissions $current_user_id $object_id view read write admin
-	    if {!$read} { continue }
+	# Skip further permissions checking if we reach the
+	# maximum number of records. However, keep on counting
+	# until "limit" in order to get an idea of the total
+	# number of results
+	if {$count > $results_per_page} {
+	    continue
 	}
-	user { 
-	    im_user_permissions $current_user_id $object_id view read write admin
-	    if {!$read} { continue }
-	}
-	im_fs_file { 
-	    # The file is readable if it's business object is readable
-	    # AND if the folder is readable
 
-	    # Very ugly: The biz_object_id is not checked for "user"
-	    # because it is very slow... So check it here now.
-	    if {"user" == $biz_object_type} {
-		im_user_permissions $current_user_id $biz_object_id view read write admin
+	set name_link $name
+	if {"" != $object_url} {
+	    set name_link "<a href=\"$object_url$object_id\">$name</a>\n"
+	}
+	
+	set text [im_tsvector_to_headline $full_text_index]
+	set headline [db_string headline "select ts_headline(:text, :q::tsquery)" -default ""]
+
+	# Final permission test: Make sure no object slips through security
+	# even if it's kind of slow to do this iteratively...
+	switch $object_type {
+	    im_project { 
+		im_project_permissions $current_user_id $object_id view read write admin
 		if {!$read} { continue }
 	    }
+	    user { 
+		im_user_permissions $current_user_id $object_id view read write admin
+		if {!$read} { continue }
+	    }
+	    im_fs_file { 
+		# The file is readable if it's business object is readable
+		# AND if the folder is readable
 
-	    # Determine the permissions for the file
-	    set file_permission_p 0
-	    db_0or1row forum_perm "
+		# Very ugly: The biz_object_id is not checked for "user"
+		# because it is very slow... So check it here now.
+		if {"user" == $biz_object_type} {
+		    im_user_permissions $current_user_id $biz_object_id view read write admin
+		    if {!$read} { continue }
+		}
+
+		# Determine the permissions for the file
+		set file_permission_p 0
+		db_0or1row forum_perm "
 		select	f.filename,
 			'1' as file_permission_p
 		from	im_fs_files f
 		where	f.file_id = :object_id
 	    "
-	    if {!$file_permission_p} { continue }
+		if {!$file_permission_p} { continue }
 
-	    set name_link "<a href=\"$object_url$biz_object_id&view_name=files\">$biz_object_name</a>: $filename\n"
-	}
-	im_forum_topic {
-	    # The topic is readable if it's business object is readable
-	    # AND if the user belongs to the right "sphere"
-
-	    # Very ugly: The biz_object_id is not checked for "user"
-	    # because it is very slow... So check it here now.
-	    if {"user" == $biz_object_type} {
-		im_user_permissions $current_user_id $biz_object_id view read write admin
-		if {!$read} { continue }
+		set name_link "<a href=\"$object_url$biz_object_id&view_name=files\">$biz_object_name</a>: $filename\n"
 	    }
+	    im_forum_topic {
+		# The topic is readable if it's business object is readable
+		# AND if the user belongs to the right "sphere"
 
-	    # Determine if the current user belongs to the admins of
-	    # the "business object". This is necessary, because there
-	    # is the forum permission "PM Only" which gives rights only"
-	    # to the (project) managers of the of the container biz object
-	    set object_admin_sql "
+		# Very ugly: The biz_object_id is not checked for "user"
+		# because it is very slow... So check it here now.
+		if {"user" == $biz_object_type} {
+		    im_user_permissions $current_user_id $biz_object_id view read write admin
+		    if {!$read} { continue }
+		}
+
+		# Determine if the current user belongs to the admins of
+		# the "business object". This is necessary, because there
+		# is the forum permission "PM Only" which gives rights only"
+		# to the (project) managers of the of the container biz object
+		set object_admin_sql "
 				( select count(*) 
 				  from	acs_rels r,
 					im_biz_object_members m
@@ -664,11 +679,11 @@ db_foreach full_text_query $sql {
 					and r.rel_id = m.rel_id
 					and m.object_role_id in (1301, 1302, 1303, 1309)
 				)::integer\n"
-	    if {$user_is_admin_p} { set object_admin_sql "1::integer\n" }
+		if {$user_is_admin_p} { set object_admin_sql "1::integer\n" }
 
-	    # Determine the permissions for the forum item
-	    set forum_permission_p 0
-	    db_0or1row forum_perm "
+		# Determine the permissions for the forum item
+		set forum_permission_p 0
+		db_0or1row forum_perm "
 		select	t.subject,
 			im_forum_permission(
 				:current_user_id::integer,
@@ -684,44 +699,44 @@ db_foreach full_text_query $sql {
 		from	im_forum_topics t
 		where	t.topic_id = :object_id
 	    "
-	    if {!$forum_permission_p} { continue }
-#	    set name_link "<a href=\"$url$object_id\">$biz_object_name: $subject</a>\n"
-	    set name_link "<a href=\"$object_url$object_id\">$biz_object_name: $subject</a>\n"
-	}
-	content_item {
-	    db_1row content_item_detail "
+		if {!$forum_permission_p} { continue }
+		#	    set name_link "<a href=\"$url$object_id\">$biz_object_name: $subject</a>\n"
+		set name_link "<a href=\"$object_url$object_id\">$biz_object_name: $subject</a>\n"
+	    }
+	    content_item {
+		db_1row content_item_detail "
                select	name, content_type
                from	cr_items 
                where	item_id = :object_id
             "
 
-	    regsub -all { } $content_type {_} content_type_sub
-	    regsub -all {:} $content_type_sub {} content_type_sub
-	    set object_type_pretty_name [lang::message::lookup "" intranet-core.ContentItem_$content_type_sub $content_type]
+		regsub -all { } $content_type {_} content_type_sub
+		regsub -all {:} $content_type_sub {} content_type_sub
+		set object_type_pretty_name [lang::message::lookup "" intranet-core.ContentItem_$content_type_sub $content_type]
 
-	    switch $content_type {
-		"content_revision" {
-		    # Wiki
-		    set read_p [permission::permission_p \
-				    -object_id $object_id \
-				    -party_id $current_user_id \
-				    -privilege "read" ]
+		switch $content_type {
+		    "content_revision" {
+			# Wiki
+			set read_p [permission::permission_p \
+					-object_id $object_id \
+					-party_id $current_user_id \
+					-privilege "read" ]
 
-		    if {!$read_p} { continue }
-		    set name_link "<a href=\"/wiki/$name\">wiki: $name</a>\n"
-		} 
-		"workflow_case_log_entry" {
-		    # Bug-Tracker
-		    set bug_number [db_string bug_from_cr_item "
+			if {!$read_p} { continue }
+			set name_link "<a href=\"/wiki/$name\">wiki: $name</a>\n"
+		    } 
+		    "workflow_case_log_entry" {
+			# Bug-Tracker
+			set bug_number [db_string bug_from_cr_item "
                         select bug_number from bt_bugs,cr_items where item_id=:object_id and cr_items.parent_id=bug_id
                     "]
-		    if {!$bug_number} { continue }
-		    set name_link "<a href=\"/bug-tracker/bug?bug_number=$bug_number\">bug: $bug_number $name</a>"
-		}
-		"::xowiki::Page" {
-		    set page_name ""
-		    set package_mount ""
-		    db_0or1row page_info "
+			if {!$bug_number} { continue }
+			set name_link "<a href=\"/bug-tracker/bug?bug_number=$bug_number\">bug: $bug_number $name</a>"
+		    }
+		    "::xowiki::Page" {
+			set page_name ""
+			set package_mount ""
+			db_0or1row page_info "
 			select	s.name as package_mount,
 				i.name as page_name
 			from	cr_items i,
@@ -734,26 +749,26 @@ db_foreach full_text_query $sql {
 				i.item_id = d.item_id and
 				i.live_revision = d.revision_id
 		    "
-		    set name_link "<a href=\"/$package_mount/$page_name\">$page_name</a>"
-		}
-		"::xowiki::FormPage" {
+			set name_link "<a href=\"/$package_mount/$page_name\">$page_name</a>"
+		    }
+		    "::xowiki::FormPage" {
 			# Skip FormPage contents
 			continue
-		}
-		default {
-		    set name_link [lang::message::lookup "" intranet-search-pg.Unknown_CI_Type "unknown content_item type: %content_type%"]
+		    }
+		    default {
+			set name_link [lang::message::lookup "" intranet-search-pg.Unknown_CI_Type "unknown content_item type: %content_type%"]
+		    }
 		}
 	    }
 	}
-    }
 
-    # Render the object.
-    # With some objects we want to show more information...
-    switch $object_type {
-	im_project - im_ticket - im_timesheet_task {
-	    set parent_name ""
-	    set parent_id ""
-	    db_0or1row parent_info "
+	# Render the object.
+	# With some objects we want to show more information...
+	switch $object_type {
+	    im_project - im_ticket - im_timesheet_task {
+		set parent_name ""
+		set parent_id ""
+		db_0or1row parent_info "
 		select	parents.project_name as parent_name,
 			parents.project_id as parent_id
 		from	im_projects parents,
@@ -761,10 +776,10 @@ db_foreach full_text_query $sql {
 		where	parents.project_id = children.parent_id and
 			children.project_id = :object_id
 	    "
-	    set parent_html "<font>[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: 
+		set parent_html "<font>[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: 
 	    	<a href=\"[export_vars -base "/intranet/projects/view" {{project_id $parent_id}}]\">$parent_name</a></font><br>\n"
-	    if {"" == $parent_name} { set parent_html "" }
-	    append result_html "
+		if {"" == $parent_name} { set parent_html "" }
+		append result_html "
 	      <tr>
 		<td>
 		  <font>$object_type_pretty_name: $name_link</font><br>
@@ -774,11 +789,11 @@ db_foreach full_text_query $sql {
 		</td>
 	      </tr>
 	    "
-	}
-	im_forum_topic {
-	    set parent_name ""
-	    set parent_id ""
-	    db_0or1row parent_info "
+	    }
+	    im_forum_topic {
+		set parent_name ""
+		set parent_id ""
+		db_0or1row parent_info "
 		select	acs_object__name(ft.object_id) as parent_name,
 			ft.object_id as parent_id,
 			(	select	min(url) from im_biz_object_urls 
@@ -791,9 +806,9 @@ db_foreach full_text_query $sql {
 		from	im_forum_topics ft
 		where	topic_id = :object_id
 	    "
-	    set parent_html "<font>[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: <a href=\"$parent_url$parent_id\">$parent_name</a></font><br>\n"
-	    if {"" == $parent_name} { set parent_html "" }
-	    append result_html "
+		set parent_html "<font>[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: <a href=\"$parent_url$parent_id\">$parent_name</a></font><br>\n"
+		if {"" == $parent_name} { set parent_html "" }
+		append result_html "
 	      <tr>
 		<td>
 		  <font>$object_type_pretty_name: $name_link</font><br>
@@ -803,10 +818,10 @@ db_foreach full_text_query $sql {
 		</td>
 	      </tr>
 	    "
-	}
-        im_invoice {
-	    set l10n_key "intranet-cost.[im_cost_type_short_name $object_sub_type_id]"
-            append result_html "
+	    }
+	    im_invoice {
+		set l10n_key "intranet-cost.[im_cost_type_short_name $object_sub_type_id]"
+		append result_html "
               <tr>
                 <td>
                   <font>[lang::message::lookup "" intranet-cost.FinancialDocument "Financial Document"]:
@@ -816,15 +831,15 @@ db_foreach full_text_query $sql {
                 </td>
               </tr>
             "
-	}
-	default {
-	    set parent_html ""
-
-	    if {"" ne $biz_object_id && "" ne $biz_object_url && $biz_object_id ne $object_id} {
-		set biz_object_name_link "<a href='$biz_object_url$biz_object_id'>$biz_object_name</a>"
-		set parent_html "[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: $biz_object_type_pretty_name: $biz_object_name_link<br>"
 	    }
-	    append result_html "
+	    default {
+		set parent_html ""
+
+		if {"" ne $biz_object_id && "" ne $biz_object_url && $biz_object_id ne $object_id} {
+		    set biz_object_name_link "<a href='$biz_object_url$biz_object_id'>$biz_object_name</a>"
+		    set parent_html "[lang::message::lookup "" intranet-search-pg.Parent "Parent"]: $biz_object_type_pretty_name: $biz_object_name_link<br>"
+		}
+		append result_html "
 	      <tr>
 		<td>
 		  $object_type_pretty_name: $name_link<br>
@@ -834,8 +849,15 @@ db_foreach full_text_query $sql {
 		</td>
 	      </tr>
 	    "
+	    }
 	}
     }
+
+
+} errmsg]} {
+    # Explain the user how to improve the search...
+    ad_return_complaint 1 $error_message
+    ad_script_abort
 }
 
 
